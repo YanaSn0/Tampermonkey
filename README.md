@@ -1,5 +1,9 @@
 #  Tampermonkey script to remove all YT subs.
 
+Removes ~75 subs every 30 minutes.
+
+Increase the before reload delay if you want it to take longer.
+
 Install Easy YouTube Unsubscribe for Firefox.
 
 https://addons.mozilla.org/en-CA/firefox/addon/easy-youtube-unsubscribe/
@@ -8,9 +12,7 @@ Install Tampermonkey and the user script.
 
 https://addons.mozilla.org/en-CA/firefox/addon/tampermonkey/
 
-Go to (https://www.youtube.com/feed/channels). 
+Go to (https://www.youtube.com/feed/channels).
 
-May need to reload the page for extension to work.
-
-May want to increase delay to avoid getting detected and banned.
+If you don't use the YT link the 1 click button from the first extension wont show, just reload the page on the manage subs page to start Tampermonkey.
 

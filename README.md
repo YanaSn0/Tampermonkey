@@ -1,4 +1,4 @@
-#  Remove YT subs.
+#  Removes all YT subs.
 
 Removes ~75 subs with 2 to 4 second delay every 30 minutes.
 

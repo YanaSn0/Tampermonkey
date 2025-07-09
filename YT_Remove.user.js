@@ -68,7 +68,7 @@
             console.log(`[${new Date().toISOString()}] Current count check: clickCount = ${clickCount}`);
             if (clickCount >= 5) {
                 console.log(`[${new Date().toISOString()}] Reached 5 unsubscribes. Reloading page in 5 seconds...`);
-                await new Promise(resolve => setTimeout(resolve, 1800000)); // 5-second delay before reload
+                await new Promise(resolve => setTimeout(resolve, 1800000)); // 30-minute delay before reload
                 location.reload(); // Reload the page
                 await new Promise(resolve => setTimeout(resolve, 15000)); // 15-second delay after reload
                 clickCount = 0; // Reset count after reload

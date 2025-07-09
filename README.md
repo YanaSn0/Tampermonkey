@@ -16,7 +16,11 @@ Go to (https://www.youtube.com/feed/channels).
 
 Use the YT link so the Unsub button shows or in YT: Subscriptions > Manage > Reload the page to start Tampermonkey.
 
-Increase "before reload delay" to take longer than 30 minutes.
+Increase this to take longer than 30 minutes.
+
+setTimeout(resolve, 1800000)); 
+
+Increase these to take longer than 2 to 4 seconds per click.
 
 clickDelay = 2000 + Math.random() * 2000;
 

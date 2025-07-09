@@ -14,5 +14,5 @@ https://addons.mozilla.org/en-CA/firefox/addon/tampermonkey/
 
 Go to (https://www.youtube.com/feed/channels).
 
-If you don't use the YT link the 1 click button from the first extension wont show, just reload the page on the manage subs page to start Tampermonkey.
+Use the YT link so the Unsub button shows or in YT Subscriptions > Manage > Reload page to start Tampermonkey.
 

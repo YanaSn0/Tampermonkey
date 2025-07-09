@@ -18,6 +18,6 @@ in YT click: Subscriptions > Manage > Reload the page to start Tampermonkey.
 
 Increase this to take longer than 30 minutes: setTimeout(resolve, 1800000)); // 30-minute delay before reload
 
-Increase these to take longer than 2 to 4 seconds per click. clickDelay = 2000 + Math.random() * 2000;
+Increase these to take longer than 2 to 4 seconds per click: clickDelay = 2000 + Math.random() * 2000;
 
 2000 is the base. Math.random() * 2000 generates a random number between 0 and 2000ms. The total range becomes 2 to 4 seconds.

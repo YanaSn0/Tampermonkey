@@ -24,8 +24,4 @@ Increase these to take longer than 2 to 4 seconds per click.
 
 clickDelay = 2000 + Math.random() * 2000;
 
-2000 is the base. 
-
-Math.random() * 2000 generates a random number between 0 and 2000ms.
-
-The total range becomes 2 to 4 seconds.
+2000 is the base. Math.random() * 2000 generates a random number between 0 and 2000ms. The total range becomes 2 to 4 seconds.

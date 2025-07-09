@@ -12,9 +12,9 @@ https://addons.mozilla.org/en-CA/firefox/addon/tampermonkey/
 
 https://github.com/YanaSn0/Tampermonkey/blob/main/YT_Remove.user.js
 
-Go to (https://www.youtube.com/feed/channels).
+Click/bookmark this link (https://www.youtube.com/feed/channels) or
 
-Use the YT link so the Unsub button shows or in YT: Subscriptions > Manage > Reload the page to start Tampermonkey.
+in YT click: Subscriptions > Manage > Reload the page to start Tampermonkey.
 
 Increase this to take longer than 30 minutes: setTimeout(resolve, 1800000)); // 30-minute delay before reload
 

@@ -1,4 +1,4 @@
-#  Tampermonkey script to remove all YT subs.
+#  Remove all YT subs.
 
 Removes ~75 subs every 30 minutes.
 

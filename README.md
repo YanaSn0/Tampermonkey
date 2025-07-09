@@ -12,6 +12,8 @@ Install Tampermonkey and the user script.
 
 https://addons.mozilla.org/en-CA/firefox/addon/tampermonkey/
 
+https://github.com/YanaSn0/Tampermonkey/blob/main/YT_Remove.user.js
+
 Go to (https://www.youtube.com/feed/channels).
 
 Use the YT link so the Unsub button shows or in YT: Subscriptions > Manage > Reload the page to start Tampermonkey.

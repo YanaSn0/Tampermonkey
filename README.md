@@ -1,8 +1,6 @@
 #  Remove all YT subs.
 
-Removes ~75 subs every 30 minutes.
-
-Increase "before reload delay" to take longer.
+Removes ~75 subs with 2 to 4 second delay every 30 minutes.
 
 Install Easy YouTube Unsubscribe for Firefox.
 
@@ -18,3 +16,10 @@ Go to (https://www.youtube.com/feed/channels).
 
 Use the YT link so the Unsub button shows or in YT: Subscriptions > Manage > Reload the page to start Tampermonkey.
 
+Increase "before reload delay" to take longer than 30 minutes.
+
+clickDelay = 2000 + Math.random() * 2000;
+
+2000 is the base. Math.random() * 2000 generates a random number between 0 and 2000ms.
+
+The total range becomes 2 to 4 seconds.

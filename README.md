@@ -2,7 +2,7 @@
 
 Removes ~75 subs every 30 minutes.
 
-Increase the before reload delay if you want it to take longer.
+Increase before reload delay to take longer.
 
 Install Easy YouTube Unsubscribe for Firefox.
 

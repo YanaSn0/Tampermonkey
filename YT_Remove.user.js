@@ -2,7 +2,7 @@
 // @name         Auto Unsubscribe
 // @namespace    http://tampermonkey.net/
 // @version      1.9.10
-// @description  Automatically unsubscribes from YouTube channels with 2-4s delay, detailed logging
+// @description  Automatically unsubscribes with 2-4s delay, random 1-2min before reload, detailed logging
 // @author       You
 // @match        https://www.youtube.com/feed/channels*
 // @grant        none
@@ -28,6 +28,10 @@
         pauseButton.textContent = isPaused ? 'Resume Script' : 'Pause Script';
         console.log(`[${new Date().toISOString()}] Script is now ${isPaused ? 'paused' : 'resumed'}`);
     });
+
+    // Initial delay to let page load
+    console.log(`[${new Date().toISOString()}] Waiting 5 seconds for page to load...`);
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // Log all elements once at the start
     const allElements = document.querySelectorAll('a, button, span');
@@ -62,17 +66,14 @@
                 }
             }
             if (!found) {
-                console.log(`[${new Date().toISOString()}] No Unsub or Unsubscribe buttons found. Waiting 5 seconds...`);
-                await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds and check again
-            }
-            console.log(`[${new Date().toISOString()}] Current count check: clickCount = ${clickCount}`);
-            if (clickCount >= 5) {
-                console.log(`[${new Date().toISOString()}] Reached 5 unsubscribes. Reloading page in 5 seconds...`);
-                await new Promise(resolve => setTimeout(resolve, 1800000)); // 30-minute delay before reload
+                const beforeReloadDelay = 600000 + Math.random() * 600000; // Random delay between 10min and 20min (600,000 to 1,200,000ms)
+                console.log(`[${new Date().toISOString()}] No Unsub or Unsubscribe buttons found. Reloading page in ${beforeReloadDelay / 1000} seconds...`);
+                await new Promise(resolve => setTimeout(resolve, beforeReloadDelay)); // Random 1min to 2min delay before reload
                 location.reload(); // Reload the page
                 await new Promise(resolve => setTimeout(resolve, 15000)); // 15-second delay after reload
                 clickCount = 0; // Reset count after reload
             }
+            console.log(`[${new Date().toISOString()}] Current count check: clickCount = ${clickCount}`);
         }
     }
 

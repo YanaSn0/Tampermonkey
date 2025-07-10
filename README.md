@@ -1,5 +1,7 @@
 #  Removes all YT subs.
 
+Use with caution. I don't know the limits, you migh get banned with this delay or lower.
+
 Removes ~75 subs with 2 to 4 second delay every 30 minutes.
 
 Install Easy YouTube Unsubscribe for Firefox.

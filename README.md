@@ -1,7 +1,5 @@
 #  Removes all YT subs.
 
-Removes ~75 subs every 10 to 20 minutes.
-
 Install Easy YouTube Unsubscribe for Firefox: 
 
 https://addons.mozilla.org/en-CA/firefox/addon/easy-youtube-unsubscribe/

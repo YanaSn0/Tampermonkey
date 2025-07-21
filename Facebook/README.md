@@ -12,7 +12,7 @@ Tampermonkey script for bulk unfollowing on your Facebook Page's Following tab.
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/).
 2. Add `FB_Remove.user.js` as a new script.
-3. Go to your Page's Following tab.
+3. Go to your Page's Following tab and reload the page.
 4. Use the buttons at top-right to start bulk unfollowing.
 
 ## Note

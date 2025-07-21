@@ -1,4 +1,6 @@
-#  Removes all YT subs.
+#  YT_Remove
+
+Removes all YT subs.
 
 Install Easy YouTube Unsubscribe for Firefox: 
 

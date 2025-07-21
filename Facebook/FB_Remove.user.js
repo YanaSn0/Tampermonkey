@@ -13,7 +13,7 @@
 
     const DELAY = 1200;        // Time between unfollow actions (ms)
     const SCROLL_DELAY = 900;  // Time to wait after each scroll (ms)
-    const MAX_SCROLLS = 100;   // Maximum scroll attempts
+    const MAX_SCROLLS = 500;   // Maximum scroll attempts
 
     // Helper to click elements
     function simulateClick(elem) {

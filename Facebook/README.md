@@ -7,7 +7,7 @@ Tampermonkey script for bulk unfollowing on your Facebook Page's Following tab.
 - **FB_Remove Top-Down:** Unfollows from top of list to bottom.
 - **FB_Remove Bottom-Up:** Unfollows from bottom of list to top.
 - **FB_Remove Bottom 100:** Unfollows only the last 100 entries.
-- **Max scroll** if have more than 1800 following may need to set higher than 100 to get to the bottom.
+- **Max scroll:** More than 1800 following may need to set higher than 100 to get to the bottom.
 ## Usage
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/).

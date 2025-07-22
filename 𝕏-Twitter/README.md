@@ -1,6 +1,6 @@
 # Remove_Nonmutual
 
-Tampermonkey script for bulk unfollowing on your 𝕏's Following tab.
+Tampermonkey script for bulk unfollowing on 𝕏's Following tab.
 
 ## Features
 

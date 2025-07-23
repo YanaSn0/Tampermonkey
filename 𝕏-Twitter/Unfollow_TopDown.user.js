@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         X_Unfollow_TopDown
 // @namespace    http://tampermonkey.net/
-// @version      1.2
-// @description  Unfollow non-mutual accounts on X profile's Following tab in top-down mode, scrolling to each account for visibility, with immediate pause and auto-loading.
+// @version      1.63
+// @description  Unfollow non-mutual accounts one at a time on X profile's Following tab in top-down mode, starting paused, waiting CONFIRM_DELAY + UNFOLLOW_DELAY (2500ms by default) after each unfollow confirmation, logging two lines starting with @ (next cell position, then current cell details) at top: ~100px, with fast delays and no jumping, stopping completely at list end.
 // @author       Adapted from YanaSn0’s X_Remove
 // @match        https://x.com/*/following
 // @grant        none
@@ -12,20 +12,27 @@
     'use strict';
 
     // Constants
-    const DELAY = 2000; // Delay between unfollow attempts
-    const SCROLL_DELAY = 1000; // Delay after scrolling
-    const CONFIRM_DELAY = 1500; // Delay for confirm button
-    const CONFIRM_ATTEMPTS = 3; // Max attempts to find confirm button
+    const DELAY = 100; // Delay between attempts (main loop)
+    const SCROLL_DELAY = 100; // Delay for scrolling
+    const CONFIRM_DELAY = 1500; // Delay for confirm retries
+    const UNFOLLOW_DELAY = 1000; // Additional delay after unfollow confirmation
+    const UNFOLLOW_WAIT = CONFIRM_DELAY + UNFOLLOW_DELAY; // Total wait after unfollow confirmation (2500ms)
+    const CONFIRM_ATTEMPTS = 5; // Attempts for confirm button
     const MAX_HEIGHT_STALLS = 50; // Stop if page height doesn’t change
-    const WHITELIST = ['YanaSn0w', 'YanaSn0w1']; // Whitelist
+    const WHITELIST = ['YanaSn0w', 'YanaSn0w1']; // Whitelist with only your accounts
+    const HEADER_OFFSET = 95; // Position cell at top: ~100px
+    const POSITION_TOLERANCE = 30; // Allowable deviation for top position
+    const CELL_RETRY_ATTEMPTS = 5; // Retry attempts for cell collection
 
     // Global state
     let state = {
         running: false,
-        paused: false,
+        paused: true, // Start paused
+        isProcessingUnfollow: false,
         timeoutId: null,
         processed: new Set(),
-        heightStalls: 0
+        heightStalls: 0,
+        lastScrollPosition: 0
     };
     let button = null;
 
@@ -36,66 +43,101 @@
         return rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.bottom <= window.innerHeight;
     }
 
-    // Helper to simulate click
-    function simulateClick(elem) {
-        if (!elem || !isVisible(elem)) return false;
-        elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        elem.click();
-        console.log('Clicked element:', elem.outerHTML.slice(0, 100) + '...');
-        return true;
+    // Helper to wait for scroll completion
+    async function waitForScroll(targetPosition) {
+        let attempts = 0;
+        const maxAttempts = 10;
+        while (attempts < maxAttempts) {
+            if (Math.abs(window.pageYOffset - targetPosition) < 10) {
+                return true;
+            }
+            await new Promise(resolve => setTimeout(resolve, SCROLL_DELAY));
+            attempts++;
+        }
+        console.log(`Scroll to ${targetPosition} incomplete after ${maxAttempts} attempts`);
+        return false;
     }
 
-    // Collect user cells
-    function collectUserCells() {
-        const selectors = [
-            'button[data-testid="UserCell"]', // From v3.15
-            'div[data-testid="cellInnerDiv"] a[href*="/"]' // Fallback
-        ];
-        let cells = [];
-        for (const selector of selectors) {
-            cells = Array.from(document.querySelectorAll(selector))
-                .map(cell => cell.closest('div[data-testid="cellInnerDiv"]') || cell.closest('div'))
-                .filter(cell => {
-                    const usernameLink = cell.querySelector('a[href*="/"]');
-                    const spans = cell.querySelectorAll('span');
-                    const isTrend = Array.from(spans).some(span =>
-                        span.textContent.toLowerCase().includes('trending') ||
-                        span.textContent.toLowerCase().includes('posts')
-                    );
-                    const hasFollowButton = cell.querySelector('button[data-testid*="-follow"], button[aria-label*="Follow"], button[data-testid*="-unfollow"], button[aria-label*="Following"], button[aria-label*="Unfollow"]');
-                    return usernameLink && !isTrend && hasFollowButton && !state.processed.has(cell);
-                });
-            if (cells.length > 0) {
-                console.log(`Collected ${cells.length} cells using selector: ${selector}`);
-                break;
+    // Helper to simulate click
+    async function simulateClick(elem, username, action = 'element') {
+        if (!elem) {
+            console.log(`No ${action} to click for @${username}`);
+            return false;
+        }
+        window.focus();
+        const clickScrollPosition = elem.getBoundingClientRect().top + window.pageYOffset - HEADER_OFFSET;
+        window.scrollTo({ top: clickScrollPosition, behavior: 'smooth' });
+        await waitForScroll(clickScrollPosition);
+        if (!isVisible(elem)) {
+            console.log(`${action.charAt(0).toUpperCase() + action.slice(1)} not visible for @${username}`);
+            return false;
+        }
+        try {
+            elem.click();
+            console.log(`Clicked ${action}`);
+            return true;
+        } catch (e) {
+            console.log(`Failed to click ${action} for @${username}: ${e.message}`);
+            return false;
+        }
+    }
+
+    // Collect a single user cell with retries
+    async function collectUserCell() {
+        let attempts = 0;
+        while (attempts < CELL_RETRY_ATTEMPTS) {
+            const selectors = [
+                'button[data-testid="UserCell"]',
+                'div[data-testid="cellInnerDiv"] a[href*="/"]'
+            ];
+            let cell = null;
+            for (const selector of selectors) {
+                const cells = Array.from(document.querySelectorAll(selector))
+                    .map(c => c.closest('div[data-testid="cellInnerDiv"]') || c.closest('div'))
+                    .filter(c => {
+                        const usernameLink = c.querySelector('a[href*="/"]');
+                        const spans = c.querySelectorAll('span');
+                        const isTrend = Array.from(spans).some(span =>
+                            span.textContent.toLowerCase().includes('trending') ||
+                            span.textContent.toLowerCase().includes('posts')
+                        );
+                        const hasFollowButton = c.querySelector('button[data-testid*="-follow"], button[aria-label*="Follow"], button[data-testid*="-unfollow"], button[aria-label*="Following"], button[aria-label*="Unfollow"]');
+                        const username = usernameLink?.href.split('/').pop()?.toLowerCase() || 'unknown';
+                        return usernameLink && !isTrend && hasFollowButton && !state.processed.has(username);
+                    });
+                if (cells.length > 0) {
+                    cell = cells[0];
+                    break;
+                }
             }
+            if (cell) {
+                return {
+                    element: cell,
+                    username: cell.querySelector('a[href*="/"]')?.href.split('/').pop()?.toLowerCase() || 'unknown',
+                    position: cell.getBoundingClientRect().top + window.pageYOffset,
+                    height: cell.getBoundingClientRect().height
+                };
+            }
+            console.log(`No cell found on attempt ${attempts + 1}/${CELL_RETRY_ATTEMPTS}, retrying`);
+            await new Promise(resolve => setTimeout(resolve, DELAY));
+            attempts++;
         }
-        if (cells.length === 0) {
-            console.log('No cells found with any selector');
-        }
-        return cells.map(cell => ({
-            element: cell,
-            username: cell.querySelector('a[href*="/"]')?.href.split('/').pop()?.toLowerCase() || 'unknown',
-            position: cell.getBoundingClientRect().top + window.scrollY
-        }));
+        return null;
     }
 
     // Check if account is non-mutual
     async function isNonMutual(cellObj) {
         const { element: cell, username } = cellObj;
+        state.processed.add(username);
         if (WHITELIST.includes(username)) {
-            console.log(`%cSkipping whitelisted account: @${username}`, 'color: blue');
+            console.log(`Skipping whitelisted account: @${username}`);
             return false;
         }
-        if (state.processed.has(cell)) {
-            console.log(`%cSkipping processed account: @${username}`, 'color: gray');
+        if (state.processed.has(username) && !cellObj.element.isConnected) {
             return false;
         }
 
         let followsYou = false;
-        const unfollowButton = cell.querySelector('button[data-testid*="-unfollow"], button[aria-label*="Following"], button[aria-label*="Unfollow"]');
-
-        // Check for "Follows you"
         const followIndicator = cell.querySelector('span.css-1jxf684.r-bcqeeo.r-1ttztb7.r-qvutc0.r-poiln3');
         followsYou = followIndicator && followIndicator.textContent.trim().toLowerCase() === 'follows you';
         if (!followsYou) {
@@ -103,9 +145,35 @@
             followsYou = Array.from(spans).some(span => span.textContent.trim().toLowerCase() === 'follows you');
         }
 
-        const isNonMutual = !followsYou && unfollowButton && isVisible(unfollowButton);
-        console.log(`%cChecking account: @${username} [mutual=${followsYou}]`, `color: ${followsYou ? 'green' : 'red'}`);
-        return isNonMutual;
+        return !followsYou;
+    }
+
+    // Add button with retry
+    function addButton() {
+        if (document.getElementById('x-unfollow-top-down')) return;
+        console.log('Adding button');
+        try {
+            button = document.createElement('button');
+            button.id = 'x-unfollow-top-down';
+            button.textContent = 'Start Top-Down';
+            button.style.position = 'fixed';
+            button.style.top = '20px';
+            button.style.right = '20px';
+            button.style.zIndex = '10000';
+            button.style.background = '#1da1f2';
+            button.style.color = '#fff';
+            button.style.padding = '10px 20px';
+            button.style.border = '2px solid #fff';
+            button.style.borderRadius = '5px';
+            button.style.cursor = 'pointer';
+            button.style.fontWeight = 'bold';
+            button.onclick = processFollowing;
+            document.body.appendChild(button);
+            console.log('Button added: top-down, script paused');
+        } catch (e) {
+            console.log('Failed to add button:', e.message);
+            setTimeout(addButton, 1000);
+        }
     }
 
     // Process following
@@ -116,37 +184,53 @@
             clearTimeout(state.timeoutId);
             updateButton();
             return;
-        } else if (state.paused) {
-            console.log('Resuming top-down');
-            state.paused = false;
-            updateButton();
         } else {
-            console.log('Starting top-down');
+            console.log('Starting/Resuming top-down');
             state.running = true;
             state.paused = false;
+            state.isProcessingUnfollow = false;
             state.processed.clear();
             state.heightStalls = 0;
+            state.lastScrollPosition = 0;
             updateButton();
+            state.timeoutId = setTimeout(processSingle, DELAY);
         }
 
-        async function processBatch() {
+        async function processSingle() {
             if (!state.running || state.paused) {
                 console.log('Top-down process paused or stopped');
                 return;
             }
 
-            const cells = collectUserCells();
+            // Scroll to last known position on resume
+            if (state.lastScrollPosition > 0) {
+                console.log(`Resuming at scroll position: ${state.lastScrollPosition}`);
+                window.scrollTo({ top: state.lastScrollPosition, behavior: 'smooth' });
+                await waitForScroll(state.lastScrollPosition);
+            }
+
+            // Find next cell first
+            const nextCellObj = await collectUserCell();
+            let nextScrollPosition = state.lastScrollPosition + 400; // Fallback
+            let nextUsername = 'unknown';
+            if (nextCellObj) {
+                nextScrollPosition = nextCellObj.position - HEADER_OFFSET;
+                nextUsername = nextCellObj.username;
+            }
+            console.log(`@${nextUsername} position: ${Math.round(nextScrollPosition)}`);
+
+            const cellObj = await collectUserCell();
             let lastHeight = document.body.scrollHeight;
 
-            if (cells.length === 0) {
-                console.log(`No cells found, scrollY: ${window.scrollY}, pageHeight: ${document.body.scrollHeight}`);
+            if (!cellObj) {
+                console.log(`No cell found, scrollY: ${Math.round(window.pageYOffset)}`);
                 const currentHeight = document.body.scrollHeight;
                 if (currentHeight === lastHeight) {
                     state.heightStalls++;
                     if (state.heightStalls >= MAX_HEIGHT_STALLS) {
                         console.log(`No new content after ${state.heightStalls} scrolls, stopping`);
                         state.running = false;
-                        state.paused = false;
+                        state.paused = true;
                         updateButton();
                         console.log(`Finished top-down. Processed ${state.processed.size} accounts`);
                         return;
@@ -155,90 +239,139 @@
                     state.heightStalls = 0;
                 }
                 lastHeight = currentHeight;
-                state.timeoutId = setTimeout(processBatch, SCROLL_DELAY);
+                window.scrollBy(0, 400);
+                state.lastScrollPosition = window.pageYOffset;
+                console.log(`Scrolling to: ${Math.round(state.lastScrollPosition)}`);
+                state.timeoutId = setTimeout(processSingle, DELAY);
                 return;
             }
 
-            // Process one cell at a time
-            const cellObj = cells[0]; // Process only the top cell
-            window.scrollTo({ top: cellObj.position, behavior: 'smooth' });
-            await new Promise(resolve => setTimeout(resolve, SCROLL_DELAY));
+            // Position current cell at top: ~100px
+            const cellScrollPosition = cellObj.position - HEADER_OFFSET;
+            window.scrollTo({ top: cellScrollPosition, behavior: 'smooth' });
+            await waitForScroll(cellScrollPosition);
 
-            if (state.paused) {
-                console.log('Top-down process paused or stopped');
+            // Verify position
+            const currentTop = Math.round(cellObj.element.getBoundingClientRect().top);
+            if (Math.abs(currentTop - HEADER_OFFSET) > POSITION_TOLERANCE) {
+                console.log(`Position off for @${cellObj.username} (top: ${currentTop}), retrying scroll to top: ${HEADER_OFFSET}`);
+                window.scrollTo({ top: cellObj.position - HEADER_OFFSET, behavior: 'smooth' });
+                await waitForScroll(cellObj.position - HEADER_OFFSET);
+            }
+
+            // Log current cell details
+            const isMutual = !(await isNonMutual(cellObj));
+            console.log(`%c@${cellObj.username} [mutual=${isMutual}] (top: ${Math.round(cellObj.element.getBoundingClientRect().top)}, height: ${Math.round(cellObj.height)}, position: ${Math.round(cellObj.position)})`, `color: ${isMutual ? 'green' : 'red'}`);
+
+            if (isMutual) {
+                window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                state.lastScrollPosition = nextScrollPosition;
+                state.timeoutId = setTimeout(processSingle, DELAY);
                 return;
             }
 
-            if (await isNonMutual(cellObj)) {
-                const unfollowBtn = cellObj.element.querySelector('button[data-testid*="-unfollow"], button[aria-label*="Following"], button[aria-label*="Unfollow"]');
-                if (unfollowBtn && simulateClick(unfollowBtn)) {
-                    console.log(`Unfollowed account: @${cellObj.username}`);
-                    cellObj.element.style.border = '2px solid red';
-                    let confirmAttempts = 0;
+            // Process non-mutual account
+            state.isProcessingUnfollow = true;
+            const followingBtn = cellObj.element.querySelector('button[aria-label*="Following"], button[data-testid*="-unfollow"]');
+            if (!followingBtn) {
+                console.log(`No Following button for @${cellObj.username}`);
+                state.isProcessingUnfollow = false;
+                window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                state.lastScrollPosition = nextScrollPosition;
+                state.timeoutId = setTimeout(processSingle, DELAY);
+                return;
+            }
 
-                    async function tryConfirm() {
-                        if (state.paused) {
-                            console.log('Top-down process paused or stopped');
-                            return;
+            if (await simulateClick(followingBtn, cellObj.username, 'Following button')) {
+                await new Promise(resolve => setTimeout(resolve, SCROLL_DELAY));
+                const unfollowBtn = Array.from(document.querySelectorAll('button, div[role="button"], div[role="menuitem"], span')).find(el =>
+                    el.textContent.trim().toLowerCase().includes('unfollow')
+                );
+                if (unfollowBtn) {
+                    if (await simulateClick(unfollowBtn, cellObj.username, 'Unfollow menu item')) {
+                        console.log(`Unfollowed: @${cellObj.username}`);
+                        cellObj.element.style.border = '2px solid red';
+                        let confirmAttempts = 0;
+
+                        async function tryConfirm() {
+                            const confirmBtn = document.querySelector('button[data-testid="confirmationSheetConfirm"]') ||
+                                              Array.from(document.querySelectorAll('button, div[role="button"], span')).find(el =>
+                                                  el.textContent.trim().toLowerCase().includes('unfollow')
+                                              );
+                            if (confirmBtn && await simulateClick(confirmBtn, cellObj.username, 'Confirm button')) {
+                                await new Promise(resolve => setTimeout(resolve, SCROLL_DELAY));
+                                const followBtn = cellObj.element.querySelector('button[aria-label*="Follow"], button[data-testid*="-follow"]');
+                                if (followBtn) {
+                                    console.log(`Confirmed unfollow: @${cellObj.username}`);
+                                    state.isProcessingUnfollow = false;
+                                    console.log(`Waiting ${UNFOLLOW_WAIT}ms before next account`);
+                                    await new Promise(resolve => setTimeout(resolve, UNFOLLOW_WAIT));
+                                    window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                                    state.lastScrollPosition = nextScrollPosition;
+                                    state.timeoutId = setTimeout(processSingle, DELAY);
+                                    return true;
+                                } else if (confirmAttempts < CONFIRM_ATTEMPTS - 1) {
+                                    console.log(`No Follow button for @${cellObj.username}, retrying (${confirmAttempts + 1}/${CONFIRM_ATTEMPTS})`);
+                                    confirmAttempts++;
+                                    await new Promise(resolve => setTimeout(resolve, CONFIRM_DELAY));
+                                    return await tryConfirm();
+                                } else {
+                                    console.log(`Failed to confirm @${cellObj.username} after ${CONFIRM_ATTEMPTS} attempts`);
+                                    state.isProcessingUnfollow = false;
+                                    window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                                    state.lastScrollPosition = nextScrollPosition;
+                                    state.timeoutId = setTimeout(processSingle, DELAY);
+                                    return false;
+                                }
+                            } else if (confirmAttempts < CONFIRM_ATTEMPTS - 1) {
+                                console.log(`No confirm button for @${cellObj.username}, retrying (${confirmAttempts + 1}/${CONFIRM_ATTEMPTS})`);
+                                confirmAttempts++;
+                                await new Promise(resolve => setTimeout(resolve, CONFIRM_DELAY));
+                                return await tryConfirm();
+                            } else {
+                                console.log(`Failed to confirm @${cellObj.username} after ${CONFIRM_ATTEMPTS} attempts`);
+                                state.isProcessingUnfollow = false;
+                                window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                                state.lastScrollPosition = nextScrollPosition;
+                                state.timeoutId = setTimeout(processSingle, DELAY);
+                                return false;
+                            }
                         }
-                        const confirmBtn = Array.from(document.querySelectorAll('button, div[role="button"]')).find(el =>
-                            el.textContent.trim().toLowerCase() === 'unfollow'
-                        );
-                        if (confirmBtn && simulateClick(confirmBtn)) {
-                            console.log(`Confirmed unfollow for @${cellObj.username}`);
-                        } else if (confirmAttempts < CONFIRM_ATTEMPTS - 1) {
-                            confirmAttempts++;
-                            console.log(`No confirm button for @${cellObj.username}, retrying (${confirmAttempts}/${CONFIRM_ATTEMPTS})`);
-                            state.timeoutId = setTimeout(tryConfirm, CONFIRM_DELAY);
-                            return;
-                        } else {
-                            console.log(`Failed to confirm @${cellObj.username} after ${CONFIRM_ATTEMPTS} attempts`);
-                        }
-                        state.processed.add(cellObj.element);
-                        state.timeoutId = setTimeout(processBatch, DELAY);
+
+                        await tryConfirm();
+                    } else {
+                        console.log(`No Unfollow menu item or click failed for @${cellObj.username}`);
+                        state.isProcessingUnfollow = false;
+                        window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                        state.lastScrollPosition = nextScrollPosition;
+                        state.timeoutId = setTimeout(processSingle, DELAY);
                     }
-
-                    state.timeoutId = setTimeout(tryConfirm, CONFIRM_DELAY);
                 } else {
-                    console.log(`No unfollow button or click failed for @${cellObj.username}`);
-                    state.processed.add(cellObj.element);
-                    state.timeoutId = setTimeout(processBatch, SCROLL_DELAY);
+                    console.log(`No Unfollow menu item found for @${cellObj.username}`);
+                    state.isProcessingUnfollow = false;
+                    window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                    state.lastScrollPosition = nextScrollPosition;
+                    state.timeoutId = setTimeout(processSingle, DELAY);
                 }
             } else {
-                state.processed.add(cellObj.element);
-                state.timeoutId = setTimeout(processBatch, SCROLL_DELAY);
+                console.log(`No Following button or click failed for @${cellObj.username}`);
+                state.isProcessingUnfollow = false;
+                window.scrollTo({ top: nextScrollPosition, behavior: 'smooth' });
+                state.lastScrollPosition = nextScrollPosition;
+                state.timeoutId = setTimeout(processSingle, DELAY);
             }
         }
-
-        state.timeoutId = setTimeout(processBatch, SCROLL_DELAY);
     }
 
     // Update button state
     function updateButton() {
-        button.textContent = state.running && !state.paused ? 'Pause Top-Down' : state.paused ? 'Resume Top-Down' : 'Run Top-Down';
-        console.log('Button:', button.textContent);
-    }
-
-    // Add button
-    function addButton() {
-        if (document.getElementById('x-unfollow-top-down')) return;
-        console.log('Adding button');
-        button = document.createElement('button');
-        button.id = 'x-unfollow-top-down';
-        button.textContent = 'Run Top-Down';
-        button.style.position = 'fixed';
-        button.style.top = '20px';
-        button.style.right = '20px';
-        button.style.zIndex = 9999;
-        button.style.background = '#1da1f2';
-        button.style.color = '#fff';
-        button.style.padding = '10px 20px';
-        button.style.border = 'none';
-        button.style.borderRadius = '5px';
-        button.style.cursor = 'pointer';
-        button.onclick = processFollowing;
-        document.body.appendChild(button);
-        console.log('Button added: top-down');
+        if (button) {
+            button.textContent = state.running && !state.paused ? 'Pause Top-Down' : 'Start Top-Down';
+            console.log('Button:', button.textContent);
+        } else {
+            console.log('Button not found for update');
+            addButton();
+        }
     }
 
     // Initialize script
@@ -249,7 +382,7 @@
             addButton();
         });
     } else {
-        console.log('Document already loaded, initializing immediately');
-        addButton();
+        console.log('Document already loaded, adding button');
+        setTimeout(addButton, 1000);
     }
 })();

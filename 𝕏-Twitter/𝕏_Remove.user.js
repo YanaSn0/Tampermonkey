@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.66
 // @description  Unfollow non-mutual accounts one at a time on X profile's Following tab in top-down mode, starting paused, waiting CONFIRM_DELAY + UNFOLLOW_DELAY (2500ms by default) after each unfollow confirmation, logging two lines starting with @ (next cell position, then current cell details) at top: ~100px, stopping scroll before unfollow popup to prevent DOM desync, using 250ms DELAY and SCROLL_DELAY, with robust account detection, stopping completely at list end.
-// @author       YanaSn0w1
+// @author       YanaSn0w
 // @match        https://x.com/*/following
 // @grant        none
 // ==/UserScript==

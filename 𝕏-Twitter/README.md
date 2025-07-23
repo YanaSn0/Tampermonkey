@@ -1,15 +1,15 @@
-# Unfollow_TopDown
+# 𝕏_Remove
 
 Tampermonkey script for bulk unfollowing Non-mutual on 𝕏's Following tab.
 
 ## Features
 
-- **Unfollow_TopDown:** Unfollows everyone who doesn't follow back from the top of the list to the bottom.
+- **𝕏_Remove:** Unfollows everyone who doesn't follow back from the top of the list to the bottom.
   
 ## Usage
 
 1. Install [Tampermonkey](https://www.tampermonkey.net/).
-2. Add `Unfollow_TopDown.user.js` as a new script.
+2. Add `𝕏_Remove.user.js` as a new script.
 3. Go to your Page's Following tab and reload the page.
 4. Use the button at top-right to start bulk unfollowing.
 

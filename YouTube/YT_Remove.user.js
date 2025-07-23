@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.9.10
 // @description  Automatically unsubscribes with 2-4s delay, random 1-2min before reload, detailed logging
-// @author       You
+// @author       YanaSn0w1
 // @match        https://www.youtube.com/feed/channels*
 // @grant        none
 // @run-at       document-idle

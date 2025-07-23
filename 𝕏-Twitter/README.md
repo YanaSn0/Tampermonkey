@@ -15,4 +15,4 @@ Tampermonkey script for bulk unfollowing on 𝕏's Following tab.
 
 ## Note
 
-The script loads all entries before starting. If 𝕏 updates its layout, you may need to adjust selectors.
+If 𝕏 updates its layout, you may need to adjust selectors.

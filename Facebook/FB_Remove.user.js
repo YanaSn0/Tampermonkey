@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Three buttons: unfollow all top-down, bottom-up, or just the bottom 100 entries on Facebook Page's Following tab
-// @author       YanaSn0
+// @author       YanaSn0w1
 // @match        https://www.facebook.com/*/following
 // @grant        none
 // ==/UserScript==

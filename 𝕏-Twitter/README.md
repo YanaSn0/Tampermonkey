@@ -1,10 +1,10 @@
 # Unfollow_TopDown
 
-Tampermonkey script for bulk unfollowing on 𝕏's Following tab.
+Tampermonkey script for bulk unfollowing Non-mutual on 𝕏's Following tab.
 
 ## Features
 
-- **Unfollow_TopDown:** Unfollows from top of list to bottom.
+- **Unfollow_TopDown:** Unfollows everyone who doesn't follow back from top of list to the bottom.
   
 ## Usage
 

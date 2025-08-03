@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         X_remove
 // @namespace    http://tampermonkey.net/
-// @version      3.2
-// @description  Unfollow non-mutuals on X. Keeps scrolling/loading till truly done, retries if no new cells, acts on the cell at cutoff. Buttons on right. Number input beside Bottom #.
+// @version      4.0
+// @description  Unfollow non-mutuals on X. Keeps scrolling/loading till it really can't, retries if no new cells, always acts on the cell at the visual cutoff. Works even if tab was inactive. Buttons on right. Number input beside Bottom #. 
 // @author       YanaSn0w1
 // @match        https://x.com/*/following
 // @match        https://twitter.com/*/following
@@ -13,9 +13,9 @@
     'use strict';
 
     const DELAY = 1200;
-    const SCROLL_WAIT = 800;
+    const SCROLL_WAIT = 900;
     const HEADER_OFFSET = 100;
-    const MAX_RETRIES = 5;
+    const MAX_RETRIES = 7; // more retries = more robust for background tab
 
     const WHITELIST = ['YanaSn0w', 'YanaSn0w1'];
     let running = false, paused = false, currentMode = null, bottomN = 100;
@@ -79,13 +79,12 @@
         await new Promise(resolve => setTimeout(resolve, SCROLL_WAIT));
     }
 
-    // Find the cell visually at the cutoff after scroll
     function getCellAtCutoff() {
         const cutoff = HEADER_OFFSET;
         let visibleCells = getUserCells();
         let atCutoff = visibleCells.find(c => {
             const rect = c.getBoundingClientRect();
-            return rect.top >= cutoff - 2 && rect.top <= cutoff + 6;
+            return rect.top >= cutoff - 2 && rect.top <= cutoff + 8;
         });
         if (!atCutoff) {
             // fallback: closest to cutoff
@@ -138,6 +137,7 @@
         }, 400);
     }
 
+    // Always log/act on the cell at the cutoff line after scroll
     async function processNext() {
         if (!running || paused) return;
 
@@ -155,10 +155,11 @@
             }
         }
         if (!cell) {
-            // Try to scroll to bottom to load more if available
+            // ----------- Real "load more" logic -----------
             let before = getUserCells().length;
+            window.focus(); // try to bring tab to front
             window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
-            await new Promise(r => setTimeout(r, 1200));
+            await new Promise(r => setTimeout(r, 2200)); // longer for background tabs
             let after = getUserCells().length;
             if (after > before) {
                 doneRetries = 0;
@@ -166,7 +167,7 @@
             }
             doneRetries++;
             if (doneRetries < MAX_RETRIES) {
-                await new Promise(r => setTimeout(r, 1100));
+                await new Promise(r => setTimeout(r, 1500));
                 return processNext();
             }
             log(`Done!`);

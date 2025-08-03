@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         X_remove
 // @namespace    http://tampermonkey.net/
-// @version      3.1
-// @description  Unfollow non-mutuals on X. Log/status/action always matches the cell at the visual cutoff. Buttons on right. Number input beside Bottom #.
+// @version      3.2
+// @description  Unfollow non-mutuals on X. Keeps scrolling/loading till truly done, retries if no new cells, acts on the cell at cutoff. Buttons on right. Number input beside Bottom #.
 // @author       YanaSn0w1
 // @match        https://x.com/*/following
 // @match        https://twitter.com/*/following
@@ -12,15 +12,16 @@
 (function() {
     'use strict';
 
-    // Adjust HEADER_OFFSET to match the space under the fixed header (try 88, 100, etc)
     const DELAY = 1200;
-    const SCROLL_WAIT = 700;
+    const SCROLL_WAIT = 800;
     const HEADER_OFFSET = 100;
+    const MAX_RETRIES = 5;
 
     const WHITELIST = ['YanaSn0w', 'YanaSn0w1'];
     let running = false, paused = false, currentMode = null, bottomN = 100;
     let processed = new Set();
     let modeButtons = {};
+    let doneRetries = 0;
     const modeLabels = {
         topDown: 'Top Down',
         bottomUp: 'Bottom Up',
@@ -70,7 +71,6 @@
         );
     }
 
-    // Scroll so that the given cell is exactly at HEADER_OFFSET from the top
     async function scrollToCellPrecise(cell) {
         const rect = cell.getBoundingClientRect();
         const absoluteY = window.scrollY + rect.top;
@@ -83,7 +83,6 @@
     function getCellAtCutoff() {
         const cutoff = HEADER_OFFSET;
         let visibleCells = getUserCells();
-        // Find the cell whose top is at or just below the cutoff
         let atCutoff = visibleCells.find(c => {
             const rect = c.getBoundingClientRect();
             return rect.top >= cutoff - 2 && rect.top <= cutoff + 6;
@@ -139,7 +138,6 @@
         }, 400);
     }
 
-    // Always log/act on the cell at the cutoff line after scroll
     async function processNext() {
         if (!running || paused) return;
 
@@ -157,16 +155,31 @@
             }
         }
         if (!cell) {
+            // Try to scroll to bottom to load more if available
+            let before = getUserCells().length;
+            window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+            await new Promise(r => setTimeout(r, 1200));
+            let after = getUserCells().length;
+            if (after > before) {
+                doneRetries = 0;
+                return processNext();
+            }
+            doneRetries++;
+            if (doneRetries < MAX_RETRIES) {
+                await new Promise(r => setTimeout(r, 1100));
+                return processNext();
+            }
             log(`Done!`);
             status('Finished unfollowing!');
             running = false; paused = false; currentMode = null; processed.clear();
+            doneRetries = 0;
             updateButtonLabels();
             return;
         }
+        doneRetries = 0;
 
         await scrollToCellPrecise(cell);
 
-        // After scroll, get the cell visually at the cutoff
         let winner = getCellAtCutoff();
         const username = getUsername(winner);
         processed.add(username);
@@ -191,6 +204,7 @@
             return;
         }
         running = true; paused = false; currentMode = mode; processed.clear();
+        doneRetries = 0;
         if (mode === 'bottomN') {
             bottomN = n || 100;
             status(`Unfollowing bottom ${bottomN} entries...`);
@@ -232,8 +246,6 @@
 
     function addButtons() {
         if (document.getElementById('xremove-btn-container')) return;
-
-        // Container for right vertical stack
         const container = document.createElement('div');
         container.id = 'xremove-btn-container';
         container.style.position = 'fixed';
@@ -244,7 +256,6 @@
         container.style.flexDirection = 'column';
         container.style.alignItems = 'flex-end';
 
-        // Bottom # row (button and input side by side)
         const bottomRow = document.createElement('div');
         bottomRow.style.display = 'flex';
         bottomRow.style.alignItems = 'center';
@@ -287,7 +298,6 @@
         bottomRow.appendChild(numInput);
         container.appendChild(bottomRow);
 
-        // Top Down
         const btnTopDown = document.createElement('button');
         styleBtn(btnTopDown, '#1da1f2');
         btnTopDown.textContent = modeLabels.topDown;
@@ -295,7 +305,6 @@
         container.appendChild(btnTopDown);
         modeButtons['topDown'] = btnTopDown;
 
-        // Bottom Up
         const btnBottomUp = document.createElement('button');
         styleBtn(btnBottomUp, '#E91E63');
         btnBottomUp.textContent = modeLabels.bottomUp;

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏_Remove_Non-mutual
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      1.0
 // @description  Unfollow non-mutuals on X.
 // @author       YanaSn0w1
 // @match        https://x.com/*/following

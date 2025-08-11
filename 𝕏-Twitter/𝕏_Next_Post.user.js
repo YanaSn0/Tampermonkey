@@ -4,7 +4,7 @@
 // @version      1.0
 // @description  Highlight and scroll back to replied tweet
 // @author       YanaSn0w1
-// @match        https://x.com/*
+// @match        https://x.com/home
 // @run-at       document-idle
 // ==/UserScript==
 

@@ -2,7 +2,7 @@
 // @name         𝕏_Remove_Non-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Unfollow non-mutuals on X.
+// @description  Unfollow people who unfollowed on never followed back.
 // @author       YanaSn0w1
 // @match        https://x.com/*/following
 // @match        https://twitter.com/*/following

@@ -6,7 +6,7 @@
 
 #  𝕏_Next_Post
 
-- Home page then reload the page to cancel other scripts and add this one.
+- Home then reload the page to cancel other scripts and add this one.
 
 #  𝕏_Non-mutual
 

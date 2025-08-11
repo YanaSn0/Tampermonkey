@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏_Remove_Non-mutual
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      1.0
 // @description  Unfollow non-mutuals on X. After infinite scroll, always jumps to top and starts with the very first cell. NO users are skipped at the top. Handles huge lists, never starts from the bottom or middle. Buttons on right. Number input beside Bottom #.
 // @author       YanaSn0w1
 // @match        https://x.com/*/following

@@ -6,6 +6,6 @@
 
 - Home page then reload the page to cancel other scripts.
 
-#  𝕏_Remove_Non-mutual
+#  𝕏_Non-mutual
 
 - Following tab then reload the page click start.

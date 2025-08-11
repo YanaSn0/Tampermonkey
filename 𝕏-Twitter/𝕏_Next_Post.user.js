@@ -2,7 +2,7 @@
 // @name         𝕏_Next_Post
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Highlight and scroll back to replied tweet
+// @description  Highlight the post reply was clicked on. Scrolls to next post after click the 2nd reply button.
 // @author       YanaSn0w1
 // @match        https://x.com/home
 // @run-at       document-idle

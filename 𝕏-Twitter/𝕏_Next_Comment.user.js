@@ -2,7 +2,7 @@
 // @name         𝕏_Next_Comment
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Highlight and scroll back to replied comment on X (Twitter)
+// @description  Highlights the comment you reply to then scrolls to next
 // @author       YanaSn0w1
 // @include      https://x.com/*/status/*
 // @run-at       document-idle

@@ -4,7 +4,7 @@
 
 #  𝕏_Next_Post
 - 𝕏_Next_Post 1000: The scroll delay after click 2nd reply button.
-- Highlight 5: The number of posts to keep higlighted green. 5 is max for pictures.
+- Highlight 5: The number of posts to keep higlighted green.
 - Home then reload the page to cancel other scripts and add this one.
 
 #  𝕏_Non-mutual

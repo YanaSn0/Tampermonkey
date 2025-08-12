@@ -3,7 +3,7 @@
 // @namespace    http://tampermonkey.net/
 // @version      6.0
 // @description  Highlight post(s) (persistent green border) on reply button click, keep highlight after submit until new reply exceeds highlight count,
-// @description   scroll to next post top with adjustable delay on X.com home page
+// @description   scroll to next post top with adjustable delay on X.com home page.
 // @author       YanaSn0w1
 // @match        https://x.com/home
 // @run-at       document-idle

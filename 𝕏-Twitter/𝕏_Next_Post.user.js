@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         𝕏_Next_Post
 // @namespace    http://tampermonkey.net/
-// @version      5.4
-// @description  Highlight post (persistent green border) on reply button click, scroll to next post top after submit with adjustable delay on X.com home page
+// @version      6.0
+// @description  Highlight post(s) (persistent green border) on reply button click, keep highlight after submit until new reply exceeds highlight count, scroll to next post top with adjustable delay on X.com home page
 // @author       YanaSn0w1
 // @match        https://x.com/home
 // @run-at       document-idle
@@ -11,11 +11,12 @@
 (function () {
     'use strict';
 
-    console.log('𝕏_Next_Post v5.4 loaded');
+    console.log('𝕏_Next_Post v6.0 loaded');
 
-    let lastClickedPost = null;
+    let highlightedPosts = []; // Track highlighted posts
     const scrollOffset = -50;
     let submitDelay = 1000; // Default delay in ms
+    let highlightCount = 5; // Default number of posts to keep highlighted
 
     // Inject minimal CSS for highlight and UI
     const style = document.createElement('style');
@@ -24,7 +25,7 @@
             border: 2px solid limegreen !important;
             border-radius: 6px !important;
         }
-        #next-post-ui {
+        #𝕏_Next_Post-ui {
             position: fixed;
             top: -8px;
             right: 10px;
@@ -40,7 +41,7 @@
             font-size: 12px;
             white-space: nowrap;
         }
-        #next-post-ui input[type="number"] {
+        #𝕏_Next_Post-ui input[type="number"] {
             width: 60px;
         }
     `;
@@ -48,9 +49,10 @@
 
     // Create UI
     const ui = document.createElement('div');
-    ui.id = 'next-post-ui';
+    ui.id = '𝕏_Next_Post-ui';
     ui.innerHTML = `
         <label>𝕏_Next_Post: <input type="number" id="submit-delay" value="${submitDelay}" min="1000" step="100"></label>
+        <label>Highlight: <input type="number" id="highlight-count" value="${highlightCount}" min="0" step="1"></label>
     `;
     document.body.appendChild(ui);
 
@@ -60,6 +62,20 @@
         if (!isNaN(value) && value >= 1000) {
             submitDelay = value;
             console.log(`Scroll delay updated to ${submitDelay}ms`);
+        }
+    });
+
+    // Update highlightCount on input change
+    document.getElementById('highlight-count').addEventListener('input', (e) => {
+        const value = parseInt(e.target.value, 10);
+        if (!isNaN(value) && value >= 0) {
+            highlightCount = value;
+            console.log(`Highlight count updated to ${highlightCount} posts`);
+            // Clear excess highlights if needed
+            while (highlightedPosts.length > highlightCount) {
+                const oldestPost = highlightedPosts.shift();
+                if (oldestPost) oldestPost.style.border = '';
+            }
         }
     });
 
@@ -78,21 +94,23 @@
             console.log('Reply button clicked');
             const post = replyButton.closest('article[data-testid="tweet"]');
             if (post) {
-                if (lastClickedPost) {
-                    lastClickedPost.style.border = '';
-                }
+                // Add new highlight
                 post.style.border = '2px solid limegreen';
-                lastClickedPost = post;
+                highlightedPosts.push(post);
+                // Clear excess highlights
+                while (highlightedPosts.length > highlightCount && highlightCount > 0) {
+                    const oldestPost = highlightedPosts.shift();
+                    if (oldestPost) oldestPost.style.border = '';
+                }
             }
             return;
         }
 
         // Second reply button (submit)
         const submitButton = event.target.closest('button[data-testid="tweetButton"]:not([data-testid="app-bar-close"]), button[role="button"][aria-label*="Reply" i], button[role="button"][aria-label*="reply" i], button[role="button"][aria-label*="Post" i]');
-        if (submitButton && lastClickedPost) {
+        if (submitButton && highlightedPosts.length > 0) {
             console.log('Submit button clicked');
-            const currentPost = lastClickedPost;
-            lastClickedPost = null;
+            const currentPost = highlightedPosts[highlightedPosts.length - 1];
             setTimeout(() => {
                 const posts = document.querySelectorAll('article[data-testid="tweet"]');
                 if (!Array.from(posts).includes(currentPost)) {
@@ -105,7 +123,7 @@
                     ? nextPost.getBoundingClientRect().top + window.scrollY + scrollOffset
                     : window.scrollY + 250 + scrollOffset;
                 window.scrollTo({ top: scrollTarget, behavior: 'smooth' });
-                currentPost.style.border = '';
+                // Keep highlight on currentPost
             }, submitDelay);
         }
     }

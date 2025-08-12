@@ -2,7 +2,8 @@
 // @name         𝕏_Next_Comment
 // @namespace    http://tampermonkey.net/
 // @version      1.3
-// @description  Highlight comment(s) (persistent green border) on reply button click, keep highlight after submit until new reply exceeds highlight count, scroll to next comment top with adjustable delay on X.com status page
+// @description  Highlight comment(s) (persistent green border) on reply button click, keep highlight after submit until new reply exceeds highlight count, 
+// @description   scroll to next comment top with adjustable delay on X.com status page.
 // @author       YanaSn0w1
 // @include      https://x.com/*/status/*
 // @run-at       document-idle

@@ -17,7 +17,7 @@
     let highlightedComments = []; // Track highlighted comments
     const scrollOffset = -153;
     let submitDelay = 1200; // Default delay in ms
-    let highlightCount = 1; // Default number of comments to keep highlighted
+    let highlightCount = 5; // Default number of comments to keep highlighted
 
     // Inject minimal CSS for highlight and UI
     const style = document.createElement('style');

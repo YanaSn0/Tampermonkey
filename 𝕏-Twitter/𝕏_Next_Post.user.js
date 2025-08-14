@@ -16,7 +16,7 @@
 
     let highlightedPosts = []; // Track highlighted posts
     const scrollOffset = -50;
-    let submitDelay = 1000; // Default delay in ms
+    let submitDelay = 1300; // Default delay in ms
     let highlightCount = 5; // Default number of posts to keep highlighted
 
     // Inject minimal CSS for highlight and UI

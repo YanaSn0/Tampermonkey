@@ -41,7 +41,7 @@
   ui.innerHTML = `
     <label>min <input type="number" id="min-delay" value="500" style="width:45px;"></label>
     <label>max <input type="number" id="max-delay" value="1500" style="width:45px;"></label>
-    <label>batch <input type="number" id="batch-size" value="5" style="width:35px;"></label>
+    <label>batch <input type="number" id="batch-size" value="7" style="width:35px;"></label>
     <label>scan <input type="number" id="scan-delay" value="100" style="width:45px;"></label>
     <label>scroll <input type="number" id="scroll-position" value="107" style="width:45px;"></label>
     <button id="scan-btn" style="padding:2px 6px; border:1px solid #000;">Start</button>

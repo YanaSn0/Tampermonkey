@@ -1,7 +1,3 @@
-#  𝕏_Next_Comment
-- Only works with the full comment layout so from the media tab click share then copy link.
-- Reload the page to cancel other scripts and add this one.
-
 #  𝕏_Next_Post
 - 𝕏_Next_Post 1000: The scroll delay after click 2nd reply button.
 - Highlight 5: The number of posts to keep higlighted green.

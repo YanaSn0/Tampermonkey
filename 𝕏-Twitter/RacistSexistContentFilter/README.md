@@ -1,4 +1,5 @@
 # Uses AI locally on X for Image classification 
+
 -Requires Python >3.9 with path variable set
 -Put class.py in user folder
 -Paste Installation in powershell

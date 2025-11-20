@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Bypass Encrypted Chat with Group Scraper
+// @name         Group Scrape
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Bypass encrypted chat and scrape chat data

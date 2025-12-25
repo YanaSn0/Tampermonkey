@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.3
 // @description  Follow back people who follow you.
 // @author       YanaHeat
 // @match        https://x.com/*/followers
@@ -14,6 +14,7 @@
 
   const limitMax = 500; // Checking 500 user. Up to 5000 every 6 seconds
   const limitTotal = 5000; // Next time will check 50 +/- found.
+  const unverifiedLimit = 500; // Smaller limit for unverified to avoid spam
   let limitWait = 6 * 1000;
   const currentUsername = window.location.pathname.split('/')[1];
   const followersUrl = `https://x.com/${currentUsername}/followers`;
@@ -24,6 +25,7 @@
   }
   let secondaryUrl = originalPage.includes('verified_followers') ? followersUrl : verifiedUrl;
   let finishingUnverified = localStorage.getItem('finishingUnverified') === 'true';
+  let unverifiedChecked = localStorage.getItem('unverifiedChecked') === 'true';
 
   let running = false;
   let paused = true;
@@ -41,6 +43,8 @@
   let checkedAll = localStorage.getItem('checkedAll') === 'true';
   let checkLimit = checkedAll ? (parseInt(localStorage.getItem('checkLimit')) || 50) : limitTotal;
   let neededSecondary = localStorage.getItem('neededSecondary') === 'true';
+  let reachedMaxThisCycle = false;
+  let followedThisCycle = 0;
 
   const ui = document.createElement('div');
   ui.id = 'copilot-ui';
@@ -213,7 +217,6 @@
 
       let success = false;
       while (!success) {
-        // Add check to prevent retry if it would exceed cycle
         if (cycleFollows >= 14) break;
         followBtn.click();
         await new Promise(r => setTimeout(r, 600));
@@ -270,34 +273,56 @@
 
   async function endLogic() {
     localStorage.setItem('checkedAll', 'true');
-    if (cycleFollows >= 14) {
-      if (neededSecondary) {
-        checkLimit = 50;
-      } else {
-        checkLimit += cycleFollows; // Add the number found (e.g., +14)
+    const isVerifiedPage = window.location.href.includes('verified_followers');
+
+    let effectiveFollows = cycleFollows;
+    if (reachedMaxThisCycle) {
+      effectiveFollows = followedThisCycle;
+    }
+
+    if (reachedMaxThisCycle || effectiveFollows >= 14) {
+      if (isVerifiedPage) {
+        checkLimit += effectiveFollows;
         if (checkLimit > limitTotal) checkLimit = limitTotal;
+      } else {
+        checkLimit = 50;
       }
       localStorage.setItem('checkLimit', checkLimit.toString());
       localStorage.removeItem('neededSecondary');
     } else {
-      if (!finishingUnverified) {
-        localStorage.setItem('finishingUnverified', 'true');
-        localStorage.setItem('neededSecondary', 'true');
-        localStorage.setItem('originalPage', window.location.href);
-        localStorage.setItem('checkLimit', limitTotal.toString());
-        await new Promise(r => setTimeout(r, 5000)); // Stop for 5 seconds
-        window.location.href = secondaryUrl;
-        return;
+      if (isVerifiedPage) {
+        if (unverifiedChecked) {
+          checkLimit = 50;
+          localStorage.setItem('checkLimit', checkLimit.toString());
+          localStorage.removeItem('neededSecondary');
+          if (!timerStarted) {
+            timerStarted = true;
+            await startFbTimer(15);
+          }
+          await waitForFbTimer();
+        } else {
+          localStorage.setItem('unverifiedChecked', 'true');
+          localStorage.setItem('finishingUnverified', 'true');
+          localStorage.setItem('neededSecondary', 'true');
+          localStorage.setItem('originalPage', window.location.href);
+          localStorage.setItem('checkLimit', unverifiedLimit.toString());
+          await new Promise(r => setTimeout(r, 5000));
+          window.location.href = followersUrl;
+          return;
+        }
       } else {
-        localStorage.setItem('checkLimit', '50');
+        checkLimit = 50;
+        localStorage.setItem('checkLimit', checkLimit.toString());
         localStorage.removeItem('neededSecondary');
       }
     }
+
     await waitForFbTimer();
     localStorage.setItem('cycleFollows', '0');
     localStorage.setItem('finishingUnverified', 'false');
     timerStarted = false;
-    window.location.href = originalPage;
+    localStorage.setItem('unverifiedChecked', 'false');
+    window.location.href = verifiedUrl;
   }
 
   async function mainLoop() {
@@ -307,13 +332,19 @@
         continue;
       }
 
-      if (cycleFollows >= 14 && fbRemaining > 0) {
-        await waitForFbTimer();
+      await processBatch();
+
+      if (cycleFollows >= 14) {
+        reachedMaxThisCycle = true;
+        followedThisCycle = cycleFollows;
+        if (fbRemaining > 0) {
+          await waitForFbTimer();
+        }
         cycleFollows = 0;
         localStorage.setItem('cycleFollows', '0');
+        await endLogic();
+        return;
       }
-
-      await processBatch();
 
       await new Promise(r => setTimeout(r, 50));
 
@@ -321,13 +352,13 @@
       if (currCells === lastTotalCells) {
         stuckCount++;
         window.scrollBy({ top: window.innerHeight });
-        await new Promise(r => setTimeout(r, 2000)); // Wait for new content to load after scrolling
+        await new Promise(r => setTimeout(r, 2000));
       } else {
         stuckCount = 0;
       }
       lastTotalCells = currCells;
 
-      if (stuckCount >= 10) { // Increased threshold for more retries before switching
+      if (stuckCount >= 10) {
         await endLogic();
         return;
       }

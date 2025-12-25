@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         FB
+// @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Scrape to skip "bots" while fb normal accounts.
+// @description  Follow back accounts that follow you.
 // @author       YanaSn0w1
 // @match        https://x.com/*followers
 // @grant        none

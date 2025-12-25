@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         Group Scrape
+// @name         X-Chat-Bypass
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Bypass encrypted chat and scrape chat data

@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         𝕏_Non-mutual
+// @name         𝕏-Non-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.0
 // @description  Unfollow people who unfollowed on never followed back.

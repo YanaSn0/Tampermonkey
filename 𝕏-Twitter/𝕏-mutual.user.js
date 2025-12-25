@@ -1,31 +1,52 @@
 // ==UserScript==
-// @name         𝕏-mutual
+// @name         FB
 // @namespace    http://tampermonkey.net/
-// @version      1.3
-// @description  Follow back people who follow you.
-// @author       YanaHeat
-// @match        https://x.com/*/followers
-// @match        https://x.com/*/verified_followers
+// @version      1.0
+// @description  Scrape to skip "bots" while fb normal accounts.
+// @author       YanaSn0w1
+// @match        https://x.com/*followers
 // @grant        none
 // ==/UserScript==
 
 (function () {
   'use strict';
 
-  const limitMax = 500; // Checking 500 user. Up to 5000 every 6 seconds
-  const limitTotal = 5000; // Next time will check 50 +/- found.
-  const unverifiedLimit = 500; // Smaller limit for unverified to avoid spam
-  let limitWait = 6 * 1000;
+  // ---------- Tunables ----------
+  const SCROLL_STEP_PX  = 800;   // scroll step between batches
+  const BATCH_IDLE_MS   = 900;   // wait after scroll for new cells
+
+  const limitMax = 500;
+  const limitTotal = 5000;
+  const limitWait = 5 * 1000; // Scan timer wait in ms (e.g., 30*1000 for 30 seconds)
   const currentUsername = window.location.pathname.split('/')[1];
   const followersUrl = `https://x.com/${currentUsername}/followers`;
   const verifiedUrl = `https://x.com/${currentUsername}/verified_followers`;
-  let originalPage = localStorage.getItem('originalPage') || window.location.href;
-  if (!localStorage.getItem('originalPage')) {
-    localStorage.setItem('originalPage', originalPage);
-  }
-  let secondaryUrl = originalPage.includes('verified_followers') ? followersUrl : verifiedUrl;
+  let originalPage = verifiedUrl; // Always prioritize verified as original
+  localStorage.setItem('originalPage', originalPage); // Force set to verified
+  let secondaryUrl = followersUrl; // Unverified is secondary
   let finishingUnverified = localStorage.getItem('finishingUnverified') === 'true';
-  let unverifiedChecked = localStorage.getItem('unverifiedChecked') === 'true';
+
+  // Check current page and timer
+  const isVerifiedPage = window.location.href.includes('verified_followers');
+  const isFollowersPage = window.location.href.includes('/followers') && !isVerifiedPage;
+  let fbEndTime = parseInt(localStorage.getItem('fbEndTime') || '0');
+  let fbRemaining = Math.max(0, Math.floor((fbEndTime - Date.now()) / 1000));
+
+  // If timer ready (fbRemaining <=0) and not on verified, redirect to verified
+  if (fbRemaining <= 0 && !isVerifiedPage) {
+    console.log('[𝕏-mutual] Timer ready, redirecting to verified followers page.');
+    window.location.href = verifiedUrl;
+    return; // Stop execution until redirect
+  }
+
+  // If on unverified but not finishing, and timer ready, redirect to verified
+  if (isFollowersPage && !finishingUnverified && fbRemaining <= 0) {
+    console.log('[𝕏-mutual] Not finishing unverified, redirecting to verified.');
+    window.location.href = verifiedUrl;
+    return;
+  }
+
+  console.log(`[𝕏-mutual] On page: ${isVerifiedPage ? 'Verified' : 'Unverified'}`);
 
   let running = false;
   let paused = true;
@@ -34,17 +55,13 @@
   let lastTotalCells = 0, stuckCount = 0;
   let fbInterval = null;
   let scanInterval = null;
-  let fbRemaining = 0;
   let scanRemaining = 0;
-  let fbEndTime = parseInt(localStorage.getItem('fbEndTime') || '0');
   let scanEndTime = 0;
   let timerStarted = fbEndTime > Date.now();
   let cycleFollows = parseInt(localStorage.getItem('cycleFollows') || '0');
   let checkedAll = localStorage.getItem('checkedAll') === 'true';
   let checkLimit = checkedAll ? (parseInt(localStorage.getItem('checkLimit')) || 50) : limitTotal;
   let neededSecondary = localStorage.getItem('neededSecondary') === 'true';
-  let reachedMaxThisCycle = false;
-  let followedThisCycle = 0;
 
   const ui = document.createElement('div');
   ui.id = 'copilot-ui';
@@ -66,10 +83,7 @@
     white-space:nowrap;
   `;
   ui.innerHTML = `
-    <div style="display:flex; gap:4px;">
-      <button id="scan-btn" style="padding:2px 6px; border:1px solid #000;">Start</button>
-      <button id="clear-btn" style="padding:2px 6px; border:1px solid #000;">Clear</button>
-    </div>
+    <button id="scan-btn" style="padding:2px 6px; border:1px solid #000;">Start</button>
     <span id="fb-counter">FB: 0/14 00:00</span>
     <span id="scan-counter">Scan: 0/5000 00:00</span>
   `;
@@ -101,7 +115,6 @@
         clearInterval(fbInterval);
         fbInterval = null;
         localStorage.removeItem('fbEndTime');
-        timerStarted = false;
       }
     }, 1000);
     return new Promise(resolve => {
@@ -145,13 +158,14 @@
         clearInterval(fbInterval);
         fbInterval = null;
         localStorage.removeItem('fbEndTime');
-        timerStarted = false;
       }
     }, 1000);
   } else {
     localStorage.removeItem('fbEndTime');
-    timerStarted = false;
   }
+
+  // ---------- Utils ----------
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   function getCells() {
     return Array.from(document.querySelectorAll('button[data-testid="UserCell"]'));
@@ -165,6 +179,23 @@
   function isRateLimited() {
     const toast = document.querySelector('[data-testid="toast"]');
     if (toast && toast.textContent.toLowerCase().includes('rate limited')) return true;
+    return false;
+  }
+
+  function isErrorPresent() {
+    const xpath = "//span[contains(text(),'Something went wrong')] | //span[contains(text(),'Try reloading')]";
+    const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    return result.singleNodeValue !== null;
+  }
+
+  function clickRetryButton() {
+    const xpath = "//button[descendant::span[contains(text(),'Try again')]] | //button[descendant::span[contains(text(),'Reload')]]";
+    const result = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+    const button = result.singleNodeValue;
+    if (button) {
+      button.click();
+      return true;
+    }
     return false;
   }
 
@@ -185,11 +216,11 @@
     const firstCell = batch[0];
     const rect = firstCell.getBoundingClientRect();
     const offset = rect.top - 107;
-    window.scrollBy({ top: offset });
-    await new Promise(r => setTimeout(r, 100));
+    window.scrollBy({ top: offset, behavior: 'auto' });
+    await sleep(100);
 
     for (const cell of batch) cell.style.border = '2px solid yellow';
-    await new Promise(r => setTimeout(r, 100));
+    await sleep(100);
 
     for (const cell of batch) {
       if (paused || cycleFollows >= 14) break;
@@ -198,8 +229,7 @@
       total++;
       updateScanHud();
       if (total % limitMax === 0 && total < checkLimit) {
-        const waitMinutes = limitWait / 60000;
-        await startScanTimer(waitMinutes);
+        await startScanTimer(limitWait / 60000);
       }
       if (total >= checkLimit) {
         await endLogic();
@@ -209,19 +239,43 @@
       let followBtn = cell.querySelector('button[aria-label^="Follow"]');
       const followingBtn = cell.querySelector('button[aria-label^="Following @"], button[data-testid$="-unfollow"]');
 
-      if (followingBtn || !followBtn) {
+      if (followingBtn) {
         cell.style.border = '2px solid green';
         skipped++;
+        console.log(`[𝕏-mutual] Skipped @${username}: Already following`);
         continue;
+      }
+
+      if (!followBtn) {
+        cell.style.border = '2px solid orange';
+        skipped++;
+        console.log(`[𝕏-mutual] Skipped @${username}: No follow button`);
+        continue;
+      }
+
+      // Scroll to cell offset
+      const cellRect = cell.getBoundingClientRect();
+      const cellOffset = cellRect.top - 107;
+      window.scrollBy({ top: cellOffset, behavior: 'auto' });
+      await sleep(120);
+
+      // Scroll again before click if needed
+      const updatedRect = cell.getBoundingClientRect();
+      if (updatedRect.top < 0 || updatedRect.bottom > window.innerHeight) {
+        const updatedOffset = updatedRect.top - 107;
+        window.scrollBy({ top: updatedOffset, behavior: 'auto' });
+        await sleep(120);
       }
 
       let success = false;
       while (!success) {
-        if (cycleFollows >= 14) break;
-        followBtn.click();
-        await new Promise(r => setTimeout(r, 600));
-
         followBtn = cell.querySelector('button[aria-label^="Follow"]');
+        if (!followBtn) {
+          success = true; // Assume success if button gone
+          break;
+        }
+        followBtn.click();
+        await sleep(600);
 
         if (isRateLimited()) {
           await startFbTimer(15);
@@ -240,18 +294,15 @@
           timerStarted = true;
           startFbTimer(15);
         }
+        console.log(`[𝕏-mutual] Followed @${username}`);
+        await sleep(300);
       } else {
         cell.style.border = '2px solid orange';
         skipped++;
+        console.log(`[𝕏-mutual] Skipped @${username}: Follow failed`);
       }
 
       await randomDelay();
-    }
-  }
-
-  async function waitForFbTimer() {
-    while (fbRemaining > 0) {
-      await new Promise(r => setTimeout(r, 1000));
     }
   }
 
@@ -266,63 +317,38 @@
     }
   };
 
-  document.getElementById('clear-btn').onclick = () => {
-    localStorage.clear();
-    location.reload();
-  };
-
   async function endLogic() {
     localStorage.setItem('checkedAll', 'true');
-    const isVerifiedPage = window.location.href.includes('verified_followers');
-
-    let effectiveFollows = cycleFollows;
-    if (reachedMaxThisCycle) {
-      effectiveFollows = followedThisCycle;
-    }
-
-    if (reachedMaxThisCycle || effectiveFollows >= 14) {
-      if (isVerifiedPage) {
-        checkLimit += effectiveFollows;
-        if (checkLimit > limitTotal) checkLimit = limitTotal;
-      } else {
+    if (cycleFollows >= 14) {
+      if (neededSecondary) {
         checkLimit = 50;
+      } else {
+        checkLimit += cycleFollows; // Add the number found (e.g., +14)
+        if (checkLimit > limitTotal) checkLimit = limitTotal;
       }
       localStorage.setItem('checkLimit', checkLimit.toString());
       localStorage.removeItem('neededSecondary');
     } else {
-      if (isVerifiedPage) {
-        if (unverifiedChecked) {
-          checkLimit = 50;
-          localStorage.setItem('checkLimit', checkLimit.toString());
-          localStorage.removeItem('neededSecondary');
-          if (!timerStarted) {
-            timerStarted = true;
-            await startFbTimer(15);
-          }
-          await waitForFbTimer();
-        } else {
-          localStorage.setItem('unverifiedChecked', 'true');
-          localStorage.setItem('finishingUnverified', 'true');
-          localStorage.setItem('neededSecondary', 'true');
-          localStorage.setItem('originalPage', window.location.href);
-          localStorage.setItem('checkLimit', unverifiedLimit.toString());
-          await new Promise(r => setTimeout(r, 5000));
-          window.location.href = followersUrl;
-          return;
-        }
+      if (!finishingUnverified) {
+        localStorage.setItem('finishingUnverified', 'true');
+        localStorage.setItem('neededSecondary', 'true');
+        localStorage.setItem('originalPage', window.location.href);
+        localStorage.setItem('checkLimit', limitTotal.toString());
+        await new Promise(r => setTimeout(r, 5000)); // Stop for 5 seconds
+        window.location.href = secondaryUrl;
+        return;
       } else {
-        checkLimit = 50;
-        localStorage.setItem('checkLimit', checkLimit.toString());
+        localStorage.setItem('checkLimit', '50');
         localStorage.removeItem('neededSecondary');
       }
     }
-
-    await waitForFbTimer();
+    while (fbRemaining > 0) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
     localStorage.setItem('cycleFollows', '0');
     localStorage.setItem('finishingUnverified', 'false');
     timerStarted = false;
-    localStorage.setItem('unverifiedChecked', 'false');
-    window.location.href = verifiedUrl;
+    window.location.href = originalPage;
   }
 
   async function mainLoop() {
@@ -334,31 +360,30 @@
 
       await processBatch();
 
-      if (cycleFollows >= 14) {
-        reachedMaxThisCycle = true;
-        followedThisCycle = cycleFollows;
-        if (fbRemaining > 0) {
-          await waitForFbTimer();
-        }
-        cycleFollows = 0;
-        localStorage.setItem('cycleFollows', '0');
-        await endLogic();
-        return;
-      }
-
       await new Promise(r => setTimeout(r, 50));
 
       const currCells = getCells().length;
       if (currCells === lastTotalCells) {
-        stuckCount++;
-        window.scrollBy({ top: window.innerHeight });
-        await new Promise(r => setTimeout(r, 2000));
+        if (isErrorPresent()) {
+          console.log('[𝕏-mutual] Detected error message, trying to retry.');
+          if (clickRetryButton()) {
+            await sleep(2000); // wait for load
+            stuckCount = 0;
+          } else {
+            console.log('[𝕏-mutual] Retry button not found.');
+            stuckCount++;
+          }
+        } else {
+          stuckCount++;
+        }
+        window.scrollBy({ top: window.innerHeight, behavior: 'auto' });
+        await sleep(300); // Extra wait after scroll when stuck
       } else {
         stuckCount = 0;
       }
       lastTotalCells = currCells;
 
-      if (stuckCount >= 10) {
+      if (stuckCount >= 5) {
         await endLogic();
         return;
       }

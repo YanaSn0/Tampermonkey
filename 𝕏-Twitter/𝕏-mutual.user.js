@@ -12,8 +12,8 @@
 (function () {
   'use strict';
 
-  const limitMax = 500;
-  const limitTotal = 5000;
+  const limitMax = 500; // Checking 500 user. Up to 5000 every 6 seconds
+  const limitTotal = 5000; // Next time will check 50 +/- found.
   let limitWait = 6 * 1000;
   const currentUsername = window.location.pathname.split('/')[1];
   const followersUrl = `https://x.com/${currentUsername}/followers`;

@@ -2,7 +2,7 @@
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Follow back accounts that follow you.
+// @description  Scrape to skip "bots" while fb normal accounts.
 // @author       YanaSn0w1
 // @match        https://x.com/*followers
 // @grant        none
@@ -48,10 +48,19 @@
 
   console.log(`[𝕏-mutual] On page: ${isVerifiedPage ? 'Verified' : 'Unverified'}`);
 
+  // Check if page changed
+  const storedPage = localStorage.getItem('storedPage') || '';
+  if (storedPage !== window.location.href) {
+    localStorage.removeItem('total');
+    localStorage.removeItem('processed');
+  }
+  localStorage.setItem('storedPage', window.location.href);
+
   let running = false;
   let paused = true;
-  let processed = new Set();
-  let followed = 0, skipped = 0, total = 0;
+  let processed = new Set(JSON.parse(localStorage.getItem('processed') || '[]'));
+  let followed = 0, skipped = 0;
+  let total = parseInt(localStorage.getItem('total') || '0');
   let lastTotalCells = 0, stuckCount = 0;
   let fbInterval = null;
   let scanInterval = null;
@@ -85,7 +94,7 @@
   ui.innerHTML = `
     <button id="scan-btn" style="padding:2px 6px; border:1px solid #000;">Start</button>
     <span id="fb-counter">FB: 0/14 00:00</span>
-    <span id="scan-counter">Scan: 0/5000 00:00</span>
+    <span id="scan-counter">Scan: 0/${checkLimit} 00:00</span>
   `;
   document.body.appendChild(ui);
 
@@ -226,7 +235,9 @@
       if (paused || cycleFollows >= 14) break;
       const username = getUsername(cell);
       processed.add(username);
+      localStorage.setItem('processed', JSON.stringify(Array.from(processed)));
       total++;
+      localStorage.setItem('total', total.toString());
       updateScanHud();
       if (total % limitMax === 0 && total < checkLimit) {
         await startScanTimer(limitWait / 60000);
@@ -319,16 +330,19 @@
 
   async function endLogic() {
     localStorage.setItem('checkedAll', 'true');
+    let resetProgress = true;
+
     if (cycleFollows >= 14) {
       if (neededSecondary) {
         checkLimit = 50;
       } else {
-        checkLimit += cycleFollows; // Add the number found (e.g., +14)
+        checkLimit += 50;
         if (checkLimit > limitTotal) checkLimit = limitTotal;
       }
       localStorage.setItem('checkLimit', checkLimit.toString());
       localStorage.removeItem('neededSecondary');
     } else {
+      resetProgress = false;
       if (!finishingUnverified) {
         localStorage.setItem('finishingUnverified', 'true');
         localStorage.setItem('neededSecondary', 'true');
@@ -338,7 +352,8 @@
         window.location.href = secondaryUrl;
         return;
       } else {
-        localStorage.setItem('checkLimit', '50');
+        checkLimit = 50;
+        localStorage.setItem('checkLimit', checkLimit.toString());
         localStorage.removeItem('neededSecondary');
       }
     }
@@ -348,6 +363,10 @@
     localStorage.setItem('cycleFollows', '0');
     localStorage.setItem('finishingUnverified', 'false');
     timerStarted = false;
+    if (resetProgress) {
+      localStorage.removeItem('total');
+      localStorage.removeItem('processed');
+    }
     window.location.href = originalPage;
   }
 
@@ -356,6 +375,11 @@
       if (paused) {
         await new Promise(r => setTimeout(r, 300));
         continue;
+      }
+
+      if (total >= checkLimit) {
+        await endLogic();
+        return;
       }
 
       await processBatch();

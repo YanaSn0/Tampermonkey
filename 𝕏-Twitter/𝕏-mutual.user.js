@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
-// @version      1.04
+// @version      1.05
 // @description  Follow back people who follow you.
-// @author       YanaSn0w1
+// @author       YanaHeat
 // @match        https://x.com/*followers
 // @grant        none
 // ==/UserScript==
@@ -11,62 +11,52 @@
 (function () {
   'use strict';
 
-  const limitMax = 100;          // pause every 100 scanned
-  const limitTotal = 200;        // max to scan per page
-  const limitWait = 11 * 1000;   // 11 second cooldown
-
+  const limitMax = 100;
+  const limitTotal = 200;
   const currentUsername = window.location.pathname.split('/')[1];
   const followersUrl = `https://x.com/${currentUsername}/followers`;
   const verifiedUrl = `https://x.com/${currentUsername}/verified_followers`;
 
-  // original page is "home" (usually verified)
   let originalPage = localStorage.getItem('originalPage') || window.location.href;
-  if (!localStorage.getItem('originalPage')) {
-    localStorage.setItem('originalPage', originalPage);
-  }
+  if (!localStorage.getItem('originalPage')) localStorage.setItem('originalPage', originalPage);
 
-  // secondary is "the other one"
-  let secondaryUrl = originalPage.includes('verified_followers') ? followersUrl : verifiedUrl;
+  let onVerified = window.location.href.includes('verified_followers');
+  let secondaryUrl = onVerified ? followersUrl : verifiedUrl;
 
-  // flag: are we currently on the unverified finishing pass
   let finishingUnverified = localStorage.getItem('finishingUnverified') === 'true';
+  let neededSecondary = localStorage.getItem('neededSecondary') === 'true';
 
   let running = false;
   let paused = true;
+
   let processed = new Set();
-  let followed = 0, skipped = 0, total = 0;
-  let lastTotalCells = 0, stuckCount = 0;
+  let followed = 0;
+  let skipped = 0;
+  let total = 0;
 
   let fbInterval = null;
-  let scanInterval = null;
   let fbRemaining = 0;
-  let scanRemaining = 0;
   let fbEndTime = parseInt(localStorage.getItem('fbEndTime') || '0');
-  let scanEndTime = 0;
   let timerStarted = fbEndTime > Date.now();
+
+  let scanInterval = null;
+  let scanRemaining = 0;
+
   let cycleFollows = parseInt(localStorage.getItem('cycleFollows') || '0');
 
-  // fixed per-run scan limit: always 200
-  let checkLimit = limitTotal;
+  let checkedAll = localStorage.getItem('checkedAll') === 'true';
+  let checkLimit = checkedAll ? (parseInt(localStorage.getItem('checkLimit')) || 50) : limitTotal;
+
+  let lastScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  let lastScrollTime = Date.now();
 
   const ui = document.createElement('div');
   ui.id = 'copilot-ui';
   ui.style = `
-    position:fixed;
-    top:10px;
-    right:10px;
-    z-index:9999;
-    background:#fff;
-    padding:4px;
-    border:1px solid #ccc;
-    font-family:sans-serif;
-    color:#000;
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    gap:2px;
-    font-size:12px;
-    white-space:nowrap;
+    position:fixed; top:10px; right:10px; z-index:9999;
+    background:#fff; padding:4px; border:1px solid #ccc;
+    font-family:sans-serif; color:#000; display:flex;
+    flex-direction:column; gap:2px; font-size:12px; white-space:nowrap;
   `;
   ui.innerHTML = `
     <button id="scan-btn" style="padding:2px 6px; border:1px solid #000;">Start</button>
@@ -76,23 +66,25 @@
   document.body.appendChild(ui);
 
   function updateFbHud() {
-    const mins = Math.floor(fbRemaining / 60).toString().padStart(2, '0');
-    const secs = (fbRemaining % 60).toString().padStart(2, '0');
-    document.getElementById('fb-counter').textContent = `FB: ${cycleFollows}/14 ${mins}:${secs}`;
+    const m = Math.floor(fbRemaining / 60).toString().padStart(2, '0');
+    const s = (fbRemaining % 60).toString().padStart(2, '0');
+    document.getElementById('fb-counter').textContent = `FB: ${cycleFollows}/14 ${m}:${s}`;
   }
-  updateFbHud();
 
   function updateScanHud() {
-    const mins = Math.floor(scanRemaining / 60).toString().padStart(2, '0');
-    const secs = (scanRemaining % 60).toString().padStart(2, '0');
-    document.getElementById('scan-counter').textContent = `Scan: ${total}/${checkLimit} ${mins}:${secs}`;
+    const m = Math.floor(scanRemaining / 60).toString().padStart(2, '0');
+    const s = (scanRemaining % 60).toString().padStart(2, '0');
+    document.getElementById('scan-counter').textContent = `Scan: ${total}/${checkLimit} ${m}:${s}`;
   }
+
+  updateFbHud();
   updateScanHud();
 
   async function startFbTimer(minutes) {
     fbEndTime = Date.now() + minutes * 60000;
     localStorage.setItem('fbEndTime', fbEndTime.toString());
     fbRemaining = minutes * 60;
+    timerStarted = true;
 
     if (fbInterval) clearInterval(fbInterval);
     fbInterval = setInterval(() => {
@@ -105,24 +97,23 @@
       }
     }, 1000);
 
-    return new Promise(resolve => {
-      const checkInterval = setInterval(() => {
+    return new Promise(res => {
+      const t = setInterval(() => {
         if (Date.now() >= fbEndTime) {
-          clearInterval(checkInterval);
-          resolve();
+          clearInterval(t);
+          res();
         }
       }, 1000);
     });
   }
 
-  // currently unused, but left in case you re-use minutes-based scan waits later
   async function startScanTimer(minutes) {
-    scanEndTime = Date.now() + minutes * 60000;
     scanRemaining = minutes * 60;
+    const end = Date.now() + minutes * 11000;
 
     if (scanInterval) clearInterval(scanInterval);
     scanInterval = setInterval(() => {
-      scanRemaining = Math.max(0, Math.floor((scanEndTime - Date.now()) / 1000));
+      scanRemaining = Math.max(0, Math.floor((end - Date.now()) / 1000));
       updateScanHud();
       if (scanRemaining <= 0) {
         clearInterval(scanInterval);
@@ -130,17 +121,16 @@
       }
     }, 1000);
 
-    return new Promise(resolve => {
-      const checkInterval = setInterval(() => {
-        if (Date.now() >= scanEndTime) {
-          clearInterval(checkInterval);
-          resolve();
+    return new Promise(res => {
+      const t = setInterval(() => {
+        if (Date.now() >= end) {
+          clearInterval(t);
+          res();
         }
       }, 1000);
     });
   }
 
-  // restore FB timer on load if still active
   if (fbEndTime > Date.now()) {
     fbInterval = setInterval(() => {
       fbRemaining = Math.max(0, Math.floor((fbEndTime - Date.now()) / 1000));
@@ -161,36 +151,33 @@
 
   function getUsername(cell) {
     const link = cell.querySelector('a[href^="/"][role="link"]');
-    return link ? link.getAttribute('href').replace(/^\//, '').split('/')[0] : '';
+    return link ? link.getAttribute('href').slice(1).split('/')[0] : '';
   }
 
   function isRateLimited() {
     const toast = document.querySelector('[data-testid="toast"]');
-    if (toast && toast.textContent.toLowerCase().includes('rate limited')) return true;
-    return false;
+    return toast && toast.textContent.toLowerCase().includes('rate limited');
   }
 
   async function randomDelay() {
-    const ms = Math.floor(Math.random() * (600 - 200 + 1)) + 200;
-    return new Promise(r => setTimeout(r, ms));
+    return new Promise(r => setTimeout(r, Math.floor(Math.random() * 401) + 200));
   }
 
   async function processBatch() {
-    const cells = getCells().filter(cell => {
-      const username = getUsername(cell);
-      return username && !processed.has(username);
+    const cells = getCells().filter(c => {
+      const u = getUsername(c);
+      return u && !processed.has(u);
     });
 
     const batch = cells.slice(0, 7);
     if (batch.length === 0) return;
 
-    const firstCell = batch[0];
-    const rect = firstCell.getBoundingClientRect();
-    const offset = rect.top - 107;
-    window.scrollBy({ top: offset });
+    const first = batch[0];
+    const rect = first.getBoundingClientRect();
+    window.scrollBy({ top: rect.top - 107 });
     await new Promise(r => setTimeout(r, 100));
 
-    for (const cell of batch) cell.style.border = '2px solid yellow';
+    for (const c of batch) c.style.border = '2px solid yellow';
     await new Promise(r => setTimeout(r, 100));
 
     for (const cell of batch) {
@@ -201,18 +188,8 @@
       total++;
       updateScanHud();
 
-      // 11 second scan cooldown every 100
       if (total % limitMax === 0 && total < checkLimit) {
-        scanRemaining = limitWait / 1000;
-        updateScanHud();
-
-        const scanCountdown = setInterval(() => {
-          scanRemaining--;
-          updateScanHud();
-          if (scanRemaining <= 0) clearInterval(scanCountdown);
-        }, 1000);
-
-        await new Promise(r => setTimeout(r, limitWait));
+        await startScanTimer(1);
       }
 
       if (total >= checkLimit) {
@@ -229,45 +206,34 @@
         continue;
       }
 
-      let success = false;
-      while (!success) {
+      let ok = false;
+      while (!ok) {
         followBtn.click();
         await new Promise(r => setTimeout(r, 600));
-
         followBtn = cell.querySelector('button[aria-label^="Follow"]');
-
         if (isRateLimited()) {
           await startFbTimer(15);
-        } else {
-          success = true;
-        }
+        } else ok = true;
       }
 
-      if (success) {
-        cell.style.border = '2px solid blue';
-        followed++;
-        cycleFollows++;
-        localStorage.setItem('cycleFollows', cycleFollows.toString());
-        updateFbHud();
+      cell.style.border = '2px solid blue';
+      followed++;
+      cycleFollows++;
+      localStorage.setItem('cycleFollows', cycleFollows.toString());
+      updateFbHud();
 
-        if (!timerStarted) {
-          timerStarted = true;
-          startFbTimer(15);
-        }
-      } else {
-        cell.style.border = '2px solid orange';
-        skipped++;
+      if (!timerStarted) {
+        timerStarted = true;
+        startFbTimer(15);
       }
 
       await randomDelay();
     }
   }
 
-  document.getElementById('scan-btn').onclick = async () => {
-    const btn = document.getElementById('scan-btn');
-
+  document.getElementById('scan-btn').onclick = () => {
     paused = !paused;
-    btn.textContent = paused ? 'Start' : 'Stop';
+    document.getElementById('scan-btn').textContent = paused ? 'Start' : 'Stop';
     if (!running && !paused) {
       running = true;
       mainLoop();
@@ -275,41 +241,64 @@
   };
 
   async function endLogic() {
-    // finished scan on current page
+    localStorage.setItem('checkedAll', 'true');
 
-    if (!finishingUnverified) {
-      // just finished verified (or starting page)
-      if (cycleFollows < 14) {
-        // fewer than 14 follows, go to unverified to try more
-        localStorage.setItem('finishingUnverified', 'true');
-        await new Promise(r => setTimeout(r, 5000));
-        window.location.href = secondaryUrl;
-        return;
-      } else {
-        // hit 14 on verified, end cycle without going to unverified
-        finishingUnverified = false;
+    const isVerifiedNow = window.location.href.includes('verified_followers');
+
+    // VERIFIED 200 → UNV 50
+    if (isVerifiedNow && total >= limitTotal) {
+      checkLimit = 50;
+      localStorage.setItem('checkLimit', '50');
+      localStorage.setItem('finishingUnverified', 'true');
+      localStorage.setItem('neededSecondary', 'true');
+      localStorage.setItem('originalPage', verifiedUrl);
+      await new Promise(r => setTimeout(r, 5000));
+      window.location.href = followersUrl;
+      return;
+    }
+
+    // UNV always ends at 50 → ALWAYS timer
+    if (!isVerifiedNow) {
+      checkLimit = 50;
+      localStorage.setItem('checkLimit', '50');
+      localStorage.removeItem('neededSecondary');
+      localStorage.setItem('finishingUnverified', 'false');
+
+      if (!timerStarted) await startFbTimer(15);
+      else {
+        while (fbRemaining > 0) await new Promise(r => setTimeout(r, 1000));
       }
+
+      localStorage.setItem('cycleFollows', '0');
+      timerStarted = false;
+      window.location.href = originalPage;
+      return;
     }
 
-    // either finished unverified, or hit 14 on verified
-
-    // if no follows happened this cycle, explicitly start a 15-minute timer
-    if (cycleFollows === 0 && !timerStarted) {
-      timerStarted = true;
-      await startFbTimer(15);
+    // VERIFIED < 200 → go to UNV with 200
+    if (!finishingUnverified) {
+      localStorage.setItem('finishingUnverified', 'true');
+      localStorage.setItem('neededSecondary', 'true');
+      localStorage.setItem('originalPage', window.location.href);
+      localStorage.setItem('checkLimit', limitTotal.toString());
+      await new Promise(r => setTimeout(r, 5000));
+      window.location.href = secondaryUrl;
+      return;
     }
 
-    // wait for follow timer (either existing from a follow or the forced 15 min)
-    while (fbRemaining > 0) {
-      await new Promise(r => setTimeout(r, 1000));
+    // fallback: UNV → 50
+    checkLimit = 50;
+    localStorage.setItem('checkLimit', '50');
+    localStorage.removeItem('neededSecondary');
+
+    if (!timerStarted) await startFbTimer(15);
+    else {
+      while (fbRemaining > 0) await new Promise(r => setTimeout(r, 1000));
     }
 
-    // reset for next cycle
     localStorage.setItem('cycleFollows', '0');
     localStorage.setItem('finishingUnverified', 'false');
     timerStarted = false;
-
-    // next cycle starts back on original page (verified)
     window.location.href = originalPage;
   }
 
@@ -321,29 +310,25 @@
       }
 
       await processBatch();
-
       await new Promise(r => setTimeout(r, 50));
 
-      const currCells = getCells().length;
-      if (currCells === lastTotalCells) {
-        stuckCount++;
-        window.scrollBy({ top: window.innerHeight });
-      } else {
-        stuckCount = 0;
-      }
-      lastTotalCells = currCells;
+      window.scrollBy({ top: window.innerHeight });
 
-      if (stuckCount >= 3) {
-        await endLogic();
-        return;
+      const st = window.scrollY || document.documentElement.scrollTop || 0;
+      if (st !== lastScrollTop) {
+        lastScrollTop = st;
+        lastScrollTime = Date.now();
+      } else {
+        if (Date.now() - lastScrollTime >= 3000) {
+          await endLogic();
+          return;
+        }
       }
     }
   }
 
   setTimeout(() => {
-    if (!running) {
-      document.getElementById('scan-btn').click();
-    }
+    if (!running) document.getElementById('scan-btn').click();
   }, 5000);
 
 })();

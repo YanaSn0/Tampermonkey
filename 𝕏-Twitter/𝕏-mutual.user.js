@@ -2,7 +2,7 @@
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.1
-// @description  Scrape to skip "bots" while fb normal accounts.
+// @description  FB all that F.
 // @author       YanaSn0w1
 // @match        https://x.com/*followers
 // @grant        none

@@ -1,11 +1,10 @@
 // ==UserScript==
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
-// @version      1.03
+// @version      1.04
 // @description  Follow back people who follow you.
 // @author       YanaSn0w1
-// @match        https://x.com/*/followers
-// @match        https://x.com/*/verified_followers
+// @match        https://x.com/*followers
 // @grant        none
 // ==/UserScript==
 
@@ -276,18 +275,23 @@
   };
 
   async function endLogic() {
-    // finished scan on current page (verified or unverified)
+    // finished scan on current page
 
     if (!finishingUnverified) {
-      // we just finished verified; go to unverified
-      localStorage.setItem('finishingUnverified', 'true');
-      localStorage.setItem('originalPage', originalPage);
-      await new Promise(r => setTimeout(r, 5000));
-      window.location.href = secondaryUrl;
-      return;
+      // just finished verified (or starting page)
+      if (cycleFollows < 14) {
+        // fewer than 14 follows, go to unverified to try more
+        localStorage.setItem('finishingUnverified', 'true');
+        await new Promise(r => setTimeout(r, 5000));
+        window.location.href = secondaryUrl;
+        return;
+      } else {
+        // hit 14 on verified, end cycle without going to unverified
+        finishingUnverified = false;
+      }
     }
 
-    // we are on unverified and just finished there
+    // either finished unverified, or hit 14 on verified
 
     // if no follows happened this cycle, explicitly start a 15-minute timer
     if (cycleFollows === 0 && !timerStarted) {

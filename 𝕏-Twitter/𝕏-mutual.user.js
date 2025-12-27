@@ -11,12 +11,12 @@
 (function () {
   'use strict';
 
-  const FB_CD = 15 * 60 * 1000;   // follow cooldown
-  const SCAN_CD = 15 * 1000;      // scan cooldown
+  const FB_CD = 15 * 60 * 1000; // Pause 15 minutes
+  const SCAN_CD = 30 * 1000; // Pause 30 seconds
 
-  const pauseScan = 100;          // Scan this many user before scan CD.
-  const beforeFirstScan = 200;    // One time check, set high to check all your verified followers.
-  const afterFirstScan = 50;      // Stick to 50 after checking once. Clear local storage to reset this.
+  const pauseScan = 200; // Pause after this many user
+  const beforeFirstScan = 10000; // Check this many one time.
+  const afterFirstScan = 50; // Check this many after initial check.
 
   const currentUsername = window.location.pathname.split('/')[1];
   const followersUrl = `https://x.com/${currentUsername}/followers`;
@@ -32,8 +32,6 @@
 
   let finishingUnverified = localStorage.getItem('finishingUnverified') === 'true';
   let neededSecondary = localStorage.getItem('neededSecondary') === 'true';
-
-  // permanent 50-mode lock after first VERIFIED 200 run
   let fiftyMode = localStorage.getItem('fiftyMode') === 'true';
 
   let running = false;
@@ -111,6 +109,10 @@
         clearInterval(fbInterval);
         fbInterval = null;
         localStorage.removeItem('fbEndTime');
+        timerStarted = false;
+        cycleFollows = 0;
+        localStorage.setItem('cycleFollows', '0');
+        updateFbHud();
       }
     }, 1000);
 
@@ -156,6 +158,10 @@
         clearInterval(fbInterval);
         fbInterval = null;
         localStorage.removeItem('fbEndTime');
+        timerStarted = false;
+        cycleFollows = 0;
+        localStorage.setItem('cycleFollows', '0');
+        updateFbHud();
       }
     }, 1000);
   } else {
@@ -262,7 +268,7 @@
 
     const isVerifiedNow = window.location.href.includes('verified_followers');
 
-    // VERIFIED run that hit 200 → lock permanent 50-mode and go UNV 50
+    // VERIFIED run that hit beforeFirstScan scanned → lock permanent 50-mode and go UNV 50
     if (isVerifiedNow && total >= beforeFirstScan) {
       fiftyMode = true;
       localStorage.setItem('fiftyMode', 'true');
@@ -278,7 +284,7 @@
       return;
     }
 
-    // UNVERIFIED run: must ALWAYS be 50 and ALWAYS stop + timer, even if 0 follows
+    // UNVERIFIED run: always 50 and always stop + timer, even if 0 follows
     if (!isVerifiedNow) {
       fiftyMode = true;
       localStorage.setItem('fiftyMode', 'true');
@@ -298,7 +304,7 @@
       return;
     }
 
-    // VERIFIED < 200 → go to UNV
+    // VERIFIED < beforeFirstScan → go to UNV (only if not already in UNV chain)
     if (!finishingUnverified) {
       localStorage.setItem('finishingUnverified', 'true');
       localStorage.setItem('neededSecondary', 'true');
@@ -338,8 +344,30 @@
         continue;
       }
 
+      const isVerifiedNow = window.location.href.includes('verified_followers');
+
+      // HARD STOP: if VERIFIED and 14/14, do nothing but wait on timer
+      if (isVerifiedNow && cycleFollows >= 14) {
+        if (!timerStarted) {
+          await startFbTimer();
+        } else {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        continue;
+      }
+
       await processBatch();
       await new Promise(r => setTimeout(r, 50));
+
+      // if we crossed 14 during batch, stop everything and wait (no scroll, no endLogic, no page change)
+      if (isVerifiedNow && cycleFollows >= 14) {
+        if (!timerStarted) {
+          await startFbTimer();
+        } else {
+          await new Promise(r => setTimeout(r, 1000));
+        }
+        continue;
+      }
 
       window.scrollBy({ top: window.innerHeight });
 

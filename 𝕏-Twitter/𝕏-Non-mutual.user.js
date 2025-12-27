@@ -11,7 +11,7 @@
 (function () {
   'use strict';
 
-  const WHITELIST = ['YanaSn0w', 'YanaSn0w1'];
+  const WHITELIST = ['YanaHeat', 'YanaSn0w1'];
   let running = false;
   let paused = true;
   let pausedByInput = false;

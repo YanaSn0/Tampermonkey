@@ -5,7 +5,6 @@
 // @description  UF user who UF or never FB.
 // @author       YanaSn0w1
 // @match        https://x.com/*/following
-// @match        https://twitter.com/*/following
 // @grant        none
 // ==/UserScript==
 

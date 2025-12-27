@@ -2,7 +2,7 @@
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.07
-// @description  FB all if F me.
+// @description  IFB all.
 // @author       Yana
 // @match        https://x.com/*followers
 // @grant        none

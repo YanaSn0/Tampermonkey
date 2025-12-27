@@ -2,7 +2,7 @@
 // @name         𝕏-Non-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  Unfollow people who unfollowed on never followed back.
+// @description  UF user who UF or never FB.
 // @author       YanaSn0w1
 // @match        https://x.com/*/following
 // @match        https://twitter.com/*/following

@@ -14,9 +14,9 @@
   const FB_CD = 15 * 60 * 1000;   // follow cooldown
   const SCAN_CD = 15 * 1000;      // scan cooldown
 
-  const pauseScan = 100;          // was limitMax
-  const beforeFirstScan = 200;    // was limitTotal
-  const afterFirstScan = 50;      // 50-mode
+  const pauseScan = 100;          // Scan this many user before scan CD.
+  const beforeFirstScan = 200;    // One time check, set high to check all your verified followers.
+  const afterFirstScan = 50;      // Stick to 50 after checking once. Clear local storage to reset this.
 
   const currentUsername = window.location.pathname.split('/')[1];
   const followersUrl = `https://x.com/${currentUsername}/followers`;

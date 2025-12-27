@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
-// @version      1.05
-// @description  Follow back people who follow you.
-// @author       YanaHeat
+// @version      1.07
+// @description  FB all if F me.
+// @author       Yana
 // @match        https://x.com/*followers
 // @grant        none
 // ==/UserScript==
@@ -11,20 +11,30 @@
 (function () {
   'use strict';
 
-  const limitMax = 100;
-  const limitTotal = 200;
+  const FB_CD = 1 * 60 * 1000;   // follow cooldown
+  const SCAN_CD = 15 * 1000;      // scan cooldown
+
+  const pauseScan = 100;          // was limitMax
+  const beforeFirstScan = 200;    // was limitTotal
+  const afterFirstScan = 50;      // 50-mode
+
   const currentUsername = window.location.pathname.split('/')[1];
   const followersUrl = `https://x.com/${currentUsername}/followers`;
   const verifiedUrl = `https://x.com/${currentUsername}/verified_followers`;
 
   let originalPage = localStorage.getItem('originalPage') || window.location.href;
-  if (!localStorage.getItem('originalPage')) localStorage.setItem('originalPage', originalPage);
+  if (!localStorage.getItem('originalPage')) {
+    localStorage.setItem('originalPage', originalPage);
+  }
 
   let onVerified = window.location.href.includes('verified_followers');
   let secondaryUrl = onVerified ? followersUrl : verifiedUrl;
 
   let finishingUnverified = localStorage.getItem('finishingUnverified') === 'true';
   let neededSecondary = localStorage.getItem('neededSecondary') === 'true';
+
+  // permanent 50-mode lock after first VERIFIED 200 run
+  let fiftyMode = localStorage.getItem('fiftyMode') === 'true';
 
   let running = false;
   let paused = true;
@@ -36,16 +46,23 @@
 
   let fbInterval = null;
   let fbRemaining = 0;
-  let fbEndTime = parseInt(localStorage.getItem('fbEndTime') || '0');
+  let fbEndTime = parseInt(localStorage.getItem('fbEndTime') || '0', 10);
   let timerStarted = fbEndTime > Date.now();
 
   let scanInterval = null;
   let scanRemaining = 0;
+  let scanEndTime = 0;
 
-  let cycleFollows = parseInt(localStorage.getItem('cycleFollows') || '0');
+  let cycleFollows = parseInt(localStorage.getItem('cycleFollows') || '0', 10);
 
   let checkedAll = localStorage.getItem('checkedAll') === 'true';
-  let checkLimit = checkedAll ? (parseInt(localStorage.getItem('checkLimit')) || 50) : limitTotal;
+  let checkLimit = checkedAll
+    ? (parseInt(localStorage.getItem('checkLimit') || '0', 10) || afterFirstScan)
+    : beforeFirstScan;
+
+  if (fiftyMode) {
+    checkLimit = afterFirstScan;
+  }
 
   let lastScrollTop = window.scrollY || document.documentElement.scrollTop || 0;
   let lastScrollTime = Date.now();
@@ -80,10 +97,10 @@
   updateFbHud();
   updateScanHud();
 
-  async function startFbTimer(minutes) {
-    fbEndTime = Date.now() + minutes * 60000;
+  async function startFbTimer() {
+    fbEndTime = Date.now() + FB_CD;
     localStorage.setItem('fbEndTime', fbEndTime.toString());
-    fbRemaining = minutes * 60;
+    fbRemaining = Math.floor(FB_CD / 1000);
     timerStarted = true;
 
     if (fbInterval) clearInterval(fbInterval);
@@ -107,13 +124,13 @@
     });
   }
 
-  async function startScanTimer(minutes) {
-    scanRemaining = minutes * 60;
-    const end = Date.now() + minutes * 11000;
+  async function startScanTimer() {
+    scanEndTime = Date.now() + SCAN_CD;
+    scanRemaining = Math.floor(SCAN_CD / 1000);
 
     if (scanInterval) clearInterval(scanInterval);
     scanInterval = setInterval(() => {
-      scanRemaining = Math.max(0, Math.floor((end - Date.now()) / 1000));
+      scanRemaining = Math.max(0, Math.floor((scanEndTime - Date.now()) / 1000));
       updateScanHud();
       if (scanRemaining <= 0) {
         clearInterval(scanInterval);
@@ -123,7 +140,7 @@
 
     return new Promise(res => {
       const t = setInterval(() => {
-        if (Date.now() >= end) {
+        if (Date.now() >= scanEndTime) {
           clearInterval(t);
           res();
         }
@@ -188,8 +205,8 @@
       total++;
       updateScanHud();
 
-      if (total % limitMax === 0 && total < checkLimit) {
-        await startScanTimer(1);
+      if (total % pauseScan === 0 && total < checkLimit) {
+        await startScanTimer();
       }
 
       if (total >= checkLimit) {
@@ -212,7 +229,7 @@
         await new Promise(r => setTimeout(r, 600));
         followBtn = cell.querySelector('button[aria-label^="Follow"]');
         if (isRateLimited()) {
-          await startFbTimer(15);
+          await startFbTimer();
         } else ok = true;
       }
 
@@ -224,7 +241,7 @@
 
       if (!timerStarted) {
         timerStarted = true;
-        startFbTimer(15);
+        startFbTimer();
       }
 
       await randomDelay();
@@ -245,26 +262,32 @@
 
     const isVerifiedNow = window.location.href.includes('verified_followers');
 
-    // VERIFIED 200 → UNV 50
-    if (isVerifiedNow && total >= limitTotal) {
-      checkLimit = 50;
-      localStorage.setItem('checkLimit', '50');
+    // VERIFIED run that hit 200 → lock permanent 50-mode and go UNV 50
+    if (isVerifiedNow && total >= beforeFirstScan) {
+      fiftyMode = true;
+      localStorage.setItem('fiftyMode', 'true');
+      checkLimit = afterFirstScan;
+      localStorage.setItem('checkLimit', afterFirstScan.toString());
+
       localStorage.setItem('finishingUnverified', 'true');
       localStorage.setItem('neededSecondary', 'true');
       localStorage.setItem('originalPage', verifiedUrl);
+
       await new Promise(r => setTimeout(r, 5000));
       window.location.href = followersUrl;
       return;
     }
 
-    // UNV always ends at 50 → ALWAYS timer
+    // UNVERIFIED run: must ALWAYS be 50 and ALWAYS stop + timer, even if 0 follows
     if (!isVerifiedNow) {
-      checkLimit = 50;
-      localStorage.setItem('checkLimit', '50');
+      fiftyMode = true;
+      localStorage.setItem('fiftyMode', 'true');
+      checkLimit = afterFirstScan;
+      localStorage.setItem('checkLimit', afterFirstScan.toString());
       localStorage.removeItem('neededSecondary');
       localStorage.setItem('finishingUnverified', 'false');
 
-      if (!timerStarted) await startFbTimer(15);
+      if (!timerStarted) await startFbTimer();
       else {
         while (fbRemaining > 0) await new Promise(r => setTimeout(r, 1000));
       }
@@ -275,23 +298,29 @@
       return;
     }
 
-    // VERIFIED < 200 → go to UNV with 200
+    // VERIFIED < 200 → go to UNV
     if (!finishingUnverified) {
       localStorage.setItem('finishingUnverified', 'true');
       localStorage.setItem('neededSecondary', 'true');
       localStorage.setItem('originalPage', window.location.href);
-      localStorage.setItem('checkLimit', limitTotal.toString());
+
+      const nextLimit = fiftyMode ? afterFirstScan : beforeFirstScan;
+      checkLimit = nextLimit;
+      localStorage.setItem('checkLimit', nextLimit.toString());
+
       await new Promise(r => setTimeout(r, 5000));
       window.location.href = secondaryUrl;
       return;
     }
 
-    // fallback: UNV → 50
-    checkLimit = 50;
-    localStorage.setItem('checkLimit', '50');
+    // fallback: treat as UNV completion → lock to 50 and timer
+    fiftyMode = true;
+    localStorage.setItem('fiftyMode', 'true');
+    checkLimit = afterFirstScan;
+    localStorage.setItem('checkLimit', afterFirstScan.toString());
     localStorage.removeItem('neededSecondary');
 
-    if (!timerStarted) await startFbTimer(15);
+    if (!timerStarted) await startFbTimer();
     else {
       while (fbRemaining > 0) await new Promise(r => setTimeout(r, 1000));
     }

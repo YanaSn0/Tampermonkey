@@ -2,7 +2,7 @@
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  IFB all.
+// @description  IFB all 14 every 15 minutes.
 // @author       YanaHeat
 // @match        https://x.com/*followers
 // @grant        none

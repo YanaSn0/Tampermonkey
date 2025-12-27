@@ -11,7 +11,7 @@
 (function () {
   'use strict';
 
-  const FB_CD = 1 * 60 * 1000;   // follow cooldown
+  const FB_CD = 15 * 60 * 1000;   // follow cooldown
   const SCAN_CD = 15 * 1000;      // scan cooldown
 
   const pauseScan = 100;          // was limitMax

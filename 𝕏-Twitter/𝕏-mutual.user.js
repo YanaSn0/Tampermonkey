@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         𝕏-mutual
 // @namespace    http://tampermonkey.net/
-// @version      1.07
+// @version      1.0
 // @description  IFB all.
-// @author       Yana
+// @author       YanaHeat
 // @match        https://x.com/*followers
 // @grant        none
 // ==/UserScript==

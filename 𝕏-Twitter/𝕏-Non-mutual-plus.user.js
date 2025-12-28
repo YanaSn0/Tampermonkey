@@ -2,7 +2,7 @@
 // @name         𝕏-Non-mutual-plus
 // @namespace    http://tampermonkey.net/
 // @version      1.0
-// @description  UF user who UF or never FB.
+// @description  UF user who UF or never FB plus.
 // @author       YanaSn0w1
 // @match        https://x.com/*/following
 // @grant        none

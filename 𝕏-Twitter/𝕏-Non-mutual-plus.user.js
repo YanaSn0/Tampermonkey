@@ -18,7 +18,7 @@
   const WHITELIST = ['YanaHeat', 'YanaSn0w1'];
   const KEY_WORDS = ['elon', 'musk', 'private', 'chat', 'dm'].map(w => w.toLowerCase());
   const UF_CD = 15 * 60 * 1000;
-  const UF_MAX = 189;
+  const UF_MAX = 150;
   const SC_CD = 30 * 1000;
   const SC_PAUSE_COUNT = 500;
   const SC_MAX = 30000;

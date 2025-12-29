@@ -22,7 +22,7 @@
   const SC_CD = 30 * 1000;
   const SC_PAUSE_COUNT = 500;
   const SC_MAX = 30000;
-  // check 30k cell. 500 at 30 sec. 189 unfollow every 15 min.
+  // check 30k cell. 500 at 30 sec. 150 unfollow every 15 min.
   const MIN_DELAY = 500;
   const MAX_DELAY = 1500;
   const BATCH_SIZE = 7;

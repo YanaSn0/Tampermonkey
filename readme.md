@@ -15,4 +15,5 @@
 
 - Change to your own messages.
 - Use before 11:59pm, set date to same day.
+- Click post > schedule > scheduled posts to manually add pics.
 <img width="1600" height="900" alt="vlc_VljQU9XP0L" src="https://github.com/user-attachments/assets/b0d0a0a0-9506-4ac4-9449-78c5b28d7476" />

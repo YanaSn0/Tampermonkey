@@ -2,7 +2,7 @@
 # Donations Appreciated
 
 <a href="https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4" title="Donate to YanaHeat">
-  <img width="515" height="243" alt="Donate Button" src="https://github.com/user-attachments/assets/ab9431-066d-4977-b2d1-ecf4FB3146d2" />
+  <img width="515" height="243" alt="Donate Button" src="[https://github.com/user-attachments/assets/ab9431-066d-4977-b2d1-ecf4FB3146d2](https://github.com/user-attachments/assets/ab9e9431-d68d-4977-b2b1-ecf48f31d462)" />
 </a>
 
 # 𝕏-Mutual-Manager-Pro

@@ -3,7 +3,6 @@
 // @namespace    http://tampermonkey.net/
 // @version      1
 // @author       YanaSn0w1
-// @description  Two in one plus filters and full UI
 // @match        https://x.com/*follow*
 // @grant        none
 // ==/UserScript==
@@ -19,6 +18,11 @@
 
   let WHITELIST = JSON.parse(localStorage.getItem('um_whitelist')) || ['YanaHeat', 'YanaSn0w1'];
 
+  let scPauseCount = parseInt(localStorage.getItem('um_sc_pause_count')) || 200;
+  let scPauseSeconds = parseInt(localStorage.getItem('um_sc_pause_seconds')) || 30;
+  let fbMaxPerPeriod = parseInt(localStorage.getItem('um_fb_max_per_period')) || 14;
+  let fbScanMax = parseInt(localStorage.getItem('um_fb_scan_max')) || 10000;
+
   const MIN_DELAY = 200;
   const MAX_DELAY = 600;
   const BATCH_SIZE = 7;
@@ -27,13 +31,8 @@
 
   const UF_MAX_PER_PERIOD = 150;
   const ACTION_CD = 15 * 60 * 1000;
-  const SC_CD = 30 * 1000;
-  const SC_PAUSE_COUNT = 200;
   const SC_MAX_UNFOLLOW = 30000;
 
-  const FB_MAX_PER_PERIOD = 14;
-  const PAUSE_SCAN_EVERY = 200;
-  const LARGE_SCAN_LIMIT = 10000;
   const SMALL_SCAN_LIMIT = 50;
 
   const path = window.location.pathname;
@@ -122,8 +121,31 @@
 
   // UI
   const ui = document.createElement('div');
-  ui.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:#fff;padding:12px;border:2px solid #000;border-radius:10px;font-family:sans-serif;font-size:13px;display:flex;flex-direction:column;gap:8px;min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+  ui.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:#fff;padding:12px;border:2px solid #000;border-radius:10px;font-family:sans-serif;font-size:13px;display:flex;flex-direction:column;gap:8px;min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-height:80vh;overflow-y:auto;';
   document.body.appendChild(ui);
+
+  // Make UI draggable
+  ui.style.cursor = 'move';
+  let isDragging = false;
+  let startX, startY;
+
+  ui.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    startX = e.clientX - ui.getBoundingClientRect().left;
+    startY = e.clientY - ui.getBoundingClientRect().top;
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+      ui.style.left = `${e.clientX - startX}px`;
+      ui.style.top = `${e.clientY - startY}px`;
+      ui.style.right = 'auto';
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
 
   const startBtn = document.createElement('button');
   startBtn.textContent = 'Start';
@@ -168,31 +190,22 @@
   };
   ui.appendChild(resetBtn);
 
-  let followUnvDiv;
-  if (mode !== 'unfollow') {
-    followUnvDiv = document.createElement('div');
-    followUnvDiv.style.cssText = 'display:flex;align-items:center;';
-    const followUnvCheckbox = document.createElement('input');
-    followUnvCheckbox.type = 'checkbox';
-    followUnvCheckbox.id = 'follow-unv';
-    followUnvCheckbox.checked = localStorage.getItem('um_fb_followUnv') === 'true';
-    followUnvCheckbox.onchange = () => {
-      localStorage.setItem('um_fb_followUnv', followUnvCheckbox.checked);
-    };
-    const followUnvLabel = document.createElement('label');
-    followUnvLabel.htmlFor = 'follow-unv';
-    followUnvLabel.textContent = 'Follow Unverified';
-    followUnvLabel.style.marginLeft = '5px';
-    followUnvDiv.appendChild(followUnvCheckbox);
-    followUnvDiv.appendChild(followUnvLabel);
-    ui.appendChild(followUnvDiv);
+  // Collapsible sections
+  function createCollapsible(title, content) {
+    const details = document.createElement('details');
+    const summary = document.createElement('summary');
+    summary.textContent = title;
+    summary.style.fontWeight = 'bold';
+    details.appendChild(summary);
+    details.appendChild(content);
+    return details;
   }
 
-  // Bot filters checkboxes
-  const filtersLabel = document.createElement('div');
-  filtersLabel.textContent = 'Bot Filters:';
-  filtersLabel.style.fontWeight = 'bold';
-  ui.appendChild(filtersLabel);
+  // Bot filters section
+  const botFiltersContent = document.createElement('div');
+  botFiltersContent.style.display = 'flex';
+  botFiltersContent.style.flexDirection = 'column';
+  botFiltersContent.style.gap = '8px';
 
   const defaultPicDiv = document.createElement('div');
   defaultPicDiv.style.cssText = 'display:flex;align-items:center;';
@@ -210,7 +223,7 @@
   defaultPicLabel.style.marginLeft = '5px';
   defaultPicDiv.appendChild(defaultPicCheckbox);
   defaultPicDiv.appendChild(defaultPicLabel);
-  ui.appendChild(defaultPicDiv);
+  botFiltersContent.appendChild(defaultPicDiv);
 
   const noBioDiv = document.createElement('div');
   noBioDiv.style.cssText = 'display:flex;align-items:center;';
@@ -228,7 +241,7 @@
   noBioLabel.style.marginLeft = '5px';
   noBioDiv.appendChild(noBioCheckbox);
   noBioDiv.appendChild(noBioLabel);
-  ui.appendChild(noBioDiv);
+  botFiltersContent.appendChild(noBioDiv);
 
   const keywordsDiv = document.createElement('div');
   keywordsDiv.style.cssText = 'display:flex;align-items:center;';
@@ -246,17 +259,19 @@
   keywordsLabel.style.marginLeft = '5px';
   keywordsDiv.appendChild(keywordsCheckbox);
   keywordsDiv.appendChild(keywordsLabel);
-  ui.appendChild(keywordsDiv);
+  botFiltersContent.appendChild(keywordsDiv);
 
-  // Keywords management
-  const keywordsManageLabel = document.createElement('div');
-  keywordsManageLabel.textContent = 'Manage Keywords:';
-  keywordsManageLabel.style.fontWeight = 'bold';
-  ui.appendChild(keywordsManageLabel);
+  ui.appendChild(createCollapsible('Bot Filters', botFiltersContent));
+
+  // Manage Keywords section
+  const keywordsContent = document.createElement('div');
+  keywordsContent.style.display = 'flex';
+  keywordsContent.style.flexDirection = 'column';
+  keywordsContent.style.gap = '8px';
 
   const keywordsList = document.createElement('ul');
   keywordsList.style.cssText = 'list-style:none;padding:0;margin:0;';
-  ui.appendChild(keywordsList);
+  keywordsContent.appendChild(keywordsList);
 
   function updateKeywordsList() {
     keywordsList.innerHTML = '';
@@ -300,17 +315,19 @@
   };
   addKeywordDiv.appendChild(addInput);
   addKeywordDiv.appendChild(addBtn);
-  ui.appendChild(addKeywordDiv);
+  keywordsContent.appendChild(addKeywordDiv);
 
-  // Whitelist management
-  const whitelistManageLabel = document.createElement('div');
-  whitelistManageLabel.textContent = 'Manage Whitelist:';
-  whitelistManageLabel.style.fontWeight = 'bold';
-  ui.appendChild(whitelistManageLabel);
+  ui.appendChild(createCollapsible('Manage Keywords', keywordsContent));
+
+  // Manage Whitelist section
+  const whitelistContent = document.createElement('div');
+  whitelistContent.style.display = 'flex';
+  whitelistContent.style.flexDirection = 'column';
+  whitelistContent.style.gap = '8px';
 
   const whitelistList = document.createElement('ul');
   whitelistList.style.cssText = 'list-style:none;padding:0;margin:0;';
-  ui.appendChild(whitelistList);
+  whitelistContent.appendChild(whitelistList);
 
   function updateWhitelistList() {
     whitelistList.innerHTML = '';
@@ -354,7 +371,100 @@
   };
   addWhitelistDiv.appendChild(addWlInput);
   addWhitelistDiv.appendChild(addWlBtn);
-  ui.appendChild(addWhitelistDiv);
+  whitelistContent.appendChild(addWhitelistDiv);
+
+  ui.appendChild(createCollapsible('Manage Whitelist', whitelistContent));
+
+  // Advanced Settings section
+  const advancedContent = document.createElement('div');
+  advancedContent.style.display = 'flex';
+  advancedContent.style.flexDirection = 'column';
+  advancedContent.style.gap = '8px';
+
+  const pauseEveryDiv = document.createElement('div');
+  pauseEveryDiv.style.cssText = 'display:flex;align-items:center;gap:5px;';
+  const pauseEveryLabel = document.createElement('label');
+  pauseEveryLabel.textContent = 'Pause every:';
+  const pauseEveryInput = document.createElement('input');
+  pauseEveryInput.type = 'number';
+  pauseEveryInput.value = scPauseCount;
+  pauseEveryInput.min = '1';
+  pauseEveryInput.onchange = () => {
+    scPauseCount = parseInt(pauseEveryInput.value) || 200;
+    localStorage.setItem('um_sc_pause_count', scPauseCount);
+  };
+  pauseEveryDiv.appendChild(pauseEveryLabel);
+  pauseEveryDiv.appendChild(pauseEveryInput);
+  advancedContent.appendChild(pauseEveryDiv);
+
+  const pauseSecondsDiv = document.createElement('div');
+  pauseSecondsDiv.style.cssText = 'display:flex;align-items:center;gap:5px;';
+  const pauseSecondsLabel = document.createElement('label');
+  pauseSecondsLabel.textContent = 'Pause seconds:';
+  const pauseSecondsInput = document.createElement('input');
+  pauseSecondsInput.type = 'number';
+  pauseSecondsInput.value = scPauseSeconds;
+  pauseSecondsInput.min = '1';
+  pauseSecondsInput.onchange = () => {
+    scPauseSeconds = parseInt(pauseSecondsInput.value) || 30;
+    localStorage.setItem('um_sc_pause_seconds', scPauseSeconds);
+  };
+  pauseSecondsDiv.appendChild(pauseSecondsLabel);
+  pauseSecondsDiv.appendChild(pauseSecondsInput);
+  advancedContent.appendChild(pauseSecondsDiv);
+
+  if (mode !== 'unfollow') {
+    const followUnvDiv = document.createElement('div');
+    followUnvDiv.style.cssText = 'display:flex;align-items:center;';
+    const followUnvCheckbox = document.createElement('input');
+    followUnvCheckbox.type = 'checkbox';
+    followUnvCheckbox.id = 'follow-unv';
+    followUnvCheckbox.checked = localStorage.getItem('um_fb_followUnv') === 'true';
+    followUnvCheckbox.onchange = () => {
+      localStorage.setItem('um_fb_followUnv', followUnvCheckbox.checked);
+    };
+    const followUnvLabel = document.createElement('label');
+    followUnvLabel.htmlFor = 'follow-unv';
+    followUnvLabel.textContent = 'Follow Unverified';
+    followUnvLabel.style.marginLeft = '5px';
+    followUnvDiv.appendChild(followUnvCheckbox);
+    followUnvDiv.appendChild(followUnvLabel);
+    advancedContent.appendChild(followUnvDiv);
+
+    const fbMaxDiv = document.createElement('div');
+    fbMaxDiv.style.cssText = 'display:flex;align-items:center;gap:5px;';
+    const fbMaxLabel = document.createElement('label');
+    fbMaxLabel.textContent = 'Max FB/period:';
+    const fbMaxInput = document.createElement('input');
+    fbMaxInput.type = 'number';
+    fbMaxInput.value = fbMaxPerPeriod;
+    fbMaxInput.min = '1';
+    fbMaxInput.onchange = () => {
+      fbMaxPerPeriod = parseInt(fbMaxInput.value) || 14;
+      localStorage.setItem('um_fb_max_per_period', fbMaxPerPeriod);
+    };
+    fbMaxDiv.appendChild(fbMaxLabel);
+    fbMaxDiv.appendChild(fbMaxInput);
+    advancedContent.appendChild(fbMaxDiv);
+
+    const fbScanMaxDiv = document.createElement('div');
+    fbScanMaxDiv.style.cssText = 'display:flex;align-items:center;gap:5px;';
+    const fbScanMaxLabel = document.createElement('label');
+    fbScanMaxLabel.textContent = 'FB Scan Max:';
+    const fbScanMaxInput = document.createElement('input');
+    fbScanMaxInput.type = 'number';
+    fbScanMaxInput.value = fbScanMax;
+    fbScanMaxInput.min = '1';
+    fbScanMaxInput.onchange = () => {
+      fbScanMax = parseInt(fbScanMaxInput.value) || 10000;
+      localStorage.setItem('um_fb_scan_max', fbScanMax);
+    };
+    fbScanMaxDiv.appendChild(fbScanMaxLabel);
+    fbScanMaxDiv.appendChild(fbScanMaxInput);
+    advancedContent.appendChild(fbScanMaxDiv);
+  }
+
+  ui.appendChild(createCollapsible('Advanced Settings', advancedContent));
 
   let running = false;
   let paused = true;
@@ -363,11 +473,12 @@
     // UNFOLLOW MODE
     modeLine.textContent = 'Mode: Unfollow non-mutuals + bots';
     actionLine.innerHTML = `Unfollows: <span id="action-count">0/${UF_MAX_PER_PERIOD}</span><span id="timer"></span>`;
-    scanLine.innerHTML = `Processed: <span id="scan-count">0/${SC_MAX_UNFOLLOW}</span>`;
+    scanLine.innerHTML = `Scan: <span id="scan-count">0/${SC_MAX_UNFOLLOW}</span> <span id="scan-timer">00:00:00</span>`;
 
     const actionCountSpan = document.getElementById('action-count');
     const timerSpan = document.getElementById('timer');
     const scanCountSpan = document.getElementById('scan-count');
+    const scanTimerSpan = document.getElementById('scan-timer');
 
     let processed = new Set();
     let total = 0;
@@ -442,8 +553,16 @@
 
     function updateUI() {
       actionCountSpan.textContent = `${actionedInPeriod}/${UF_MAX_PER_PERIOD}`;
-      timerSpan.textContent = hasActioned ? ` (${Math.floor(remainingTime/60).toString().padStart(2,'0')}:${(remainingTime%60).toString().padStart(2,'0')})` : '';
+      if (hasActioned) {
+        const h = String(Math.floor(remainingTime / 3600)).padStart(2, '0');
+        const m = String(Math.floor((remainingTime % 3600) / 60)).padStart(2, '0');
+        const s = String(remainingTime % 60).padStart(2, '0');
+        timerSpan.textContent = ` (${h}:${m}:${s})`;
+      } else {
+        timerSpan.textContent = ' 00:00:00';
+      }
       scanCountSpan.textContent = `${total}/${SC_MAX_UNFOLLOW}`;
+      scanTimerSpan.textContent = ' 00:00:00';
     }
 
     loadState();
@@ -543,8 +662,8 @@
         }
         const proc = await processBatch();
         scanSincePause += proc;
-        if (scanSincePause >= SC_PAUSE_COUNT) {
-          await new Promise(r => setTimeout(r, SC_CD));
+        if (scanSincePause >= scPauseCount) {
+          await pauseWithCountdown(scPauseSeconds);
           scanSincePause = 0;
         }
         const curr = getCells().length;
@@ -564,12 +683,13 @@
   } else {
     // FOLLOW-BACK MODE
     modeLine.textContent = `Mode: Follow Back (${isVerified ? 'Verified' : 'All'} Followers)`;
-    actionLine.innerHTML = `Follows: <span id="fb-count-val">0/${FB_MAX_PER_PERIOD}</span> <span id="fb-timer">00:00</span>`;
-    scanLine.innerHTML = `Processed: <span id="scan-count">0</span>`;
+    actionLine.innerHTML = `FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span> <span id="fb-timer">00:00:00</span>`;
+    scanLine.innerHTML = `Scan: <span id="scan-count">0</span> <span id="scan-timer">00:00:00</span>`;
 
     const fbCountSpan = document.getElementById('fb-count-val');
     const fbTimerSpan = document.getElementById('fb-timer');
     const scanCountSpan = document.getElementById('scan-count');
+    const scanTimerSpan = document.getElementById('scan-timer');
 
     let processed = new Set();
     let total = 0;
@@ -588,13 +708,14 @@
 
     let fiftyMode = localStorage.getItem(storagePrefix + 'fiftyMode') === 'true';
     let checkedAll = localStorage.getItem(storagePrefix + 'checkedAll') === 'true';
-    let checkLimit = checkedAll ? SMALL_SCAN_LIMIT : (fiftyMode ? SMALL_SCAN_LIMIT : LARGE_SCAN_LIMIT);
+    let checkLimit = checkedAll ? SMALL_SCAN_LIMIT : (fiftyMode ? SMALL_SCAN_LIMIT : fbScanMax);
 
     function updateUI() {
-      const m = String(Math.floor(fbRemaining / 60)).padStart(2, '0');
+      const h = String(Math.floor(fbRemaining / 3600)).padStart(2, '0');
+      const m = String(Math.floor((fbRemaining % 3600) / 60)).padStart(2, '0');
       const s = String(fbRemaining % 60).padStart(2, '0');
-      fbCountSpan.textContent = `${cycleFollows}/${FB_MAX_PER_PERIOD}`;
-      fbTimerSpan.textContent = `${m}:${s}`;
+      fbTimerSpan.textContent = `${h}:${m}:${s}`;
+      fbCountSpan.textContent = `${cycleFollows}/${fbMaxPerPeriod}`;
       scanCountSpan.textContent = `${total}/${checkLimit}`;
     }
 
@@ -630,8 +751,21 @@
           updateUI();
         }
       }, 1000);
+    } else {
+      fbRemaining = 0;
     }
     updateUI();
+
+    async function pauseWithCountdown(seconds) {
+      for (let i = seconds; i >= 0; i--) {
+        const h = String(Math.floor(i / 3600)).padStart(2, '0');
+        const m = String(Math.floor((i % 3600) / 60)).padStart(2, '0');
+        const s = String(i % 60).padStart(2, '0');
+        scanTimerSpan.textContent = `${h}:${m}:${s}`;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      scanTimerSpan.textContent = '00:00:00';
+    }
 
     async function processBatch() {
       let cells = getCells().filter(c => !processed.has(getUsername(c)));
@@ -646,7 +780,7 @@
 
       let proc = 0;
       for (let cell of batch) {
-        if (paused || cycleFollows >= FB_MAX_PER_PERIOD) break;
+        if (paused || cycleFollows >= fbMaxPerPeriod) break;
         const user = getUsername(cell);
         processed.add(user);
         total++;
@@ -727,10 +861,21 @@
     async function finishLogic() {
       localStorage.setItem(storagePrefix + 'checkedAll', 'true');
       localStorage.setItem(storagePrefix + 'fiftyMode', 'true');
+      if (cycleFollows < fbMaxPerPeriod && fbRemaining === 0) {
+        await startFbCooldown();
+      }
       if (fbRemaining > 0) {
-        await new Promise(r => setTimeout(r, fbRemaining * 1000 + 2000));
+        await new Promise(resolve => {
+          const waitInterval = setInterval(() => {
+            if (fbRemaining <= 0) {
+              clearInterval(waitInterval);
+              resolve();
+            }
+          }, 1000);
+        });
+        await new Promise(r => setTimeout(r, 2000));
       } else {
-        await new Promise(r => setTimeout(r, ACTION_CD + 2000));
+        await new Promise(r => setTimeout(r, 2000));
       }
       const followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
       let nextUrl;
@@ -758,9 +903,13 @@
             }
             const proc = await processBatch();
             scanSincePause += proc;
-            if (scanSincePause >= PAUSE_SCAN_EVERY) {
-              await new Promise(r => setTimeout(r, SC_CD));
+            if (scanSincePause >= scPauseCount) {
+              await pauseWithCountdown(scPauseSeconds);
               scanSincePause = 0;
+            }
+            if (total >= checkLimit) {
+              await finishLogic();
+              return;
             }
             window.scrollBy({top: window.innerHeight});
             const curr = window.scrollY;

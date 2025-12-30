@@ -693,7 +693,7 @@
     // FOLLOW-BACK MODE
     modeLine.textContent = `Mode: Follow Back (${isVerified ? 'Verified' : 'All'} Followers)`;
     actionLine.innerHTML = `FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span>`;
-    scanLine.innerHTML = `Scan: <span id="scan-count">0</span> <span id="scan-timer">00:00:00</span>`;
+    scanLine.innerHTML = `Scan: <span id="scan-count">0/50</span> <span id="scan-timer">00:00:00</span>`;
 
     const fbCountSpan = document.getElementById('fb-count-val');
     const scanCountSpan = document.getElementById('scan-count');
@@ -701,24 +701,12 @@
 
     let processed = new Set();
     let total = 0;
-    let cycleFollows = 0;
-
-    const storagePrefix = 'um_fb_';
-
-    let followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
-    let phase = localStorage.getItem(storagePrefix + 'phase') || 'verified'; // 'verified' or 'unverified'
-    cycleFollows = parseInt(localStorage.getItem(storagePrefix + 'cycle') || '0');
-
-    // Always force starting on verified if Follow Unverified is on and we are on followers page but phase says 'verified'
-    if (!isVerified && phase === 'verified') {
-      window.location.href = verifiedUrl;
-      return;
-    }
+    let cycleFollows = parseInt(localStorage.getItem('um_fb_cycle') || '0');
+    const followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
 
     function updateUI() {
       fbCountSpan.textContent = `${cycleFollows}/${fbMaxPerPeriod}`;
-      const limit = phase === 'verified' ? fbScanMax : SMALL_SCAN_LIMIT;
-      scanCountSpan.textContent = `${total}/${limit}`;
+      scanCountSpan.textContent = `${total}/50`;
     }
 
     async function pauseWithCountdown(seconds) {
@@ -743,8 +731,7 @@
         await new Promise(r => setTimeout(r, 1000));
       }
       scanTimerSpan.textContent = '00:00:00';
-      localStorage.setItem(storagePrefix + 'cycle', '0');
-      localStorage.setItem(storagePrefix + 'phase', 'verified');
+      localStorage.setItem('um_fb_cycle', '0');
       window.location.href = verifiedUrl;
     }
 
@@ -752,8 +739,6 @@
 
     async function processBatch() {
       let cells = getCells().filter(c => !processed.has(getUsername(c)));
-      if (!cells.length) return 0;
-      let limit = phase === 'verified' ? fbScanMax : SMALL_SCAN_LIMIT;
       let batch = cells.slice(0, BATCH_SIZE);
       if (!batch.length) return 0;
 
@@ -765,14 +750,13 @@
 
       let proc = 0;
       for (let cell of batch) {
-        if (paused || cycleFollows >= fbMaxPerPeriod) break;
+        if (paused || cycleFollows >= fbMaxPerPeriod || total >= SMALL_SCAN_LIMIT) break;
 
         const user = getUsername(cell);
         processed.add(user);
         total++;
         proc++;
         updateUI();
-        if (total >= limit) break;
 
         if (WHITELIST.includes(user)) {
           cell.style.border = '2px solid orange';
@@ -822,7 +806,7 @@
         if (success) {
           cell.style.border = '2px solid blue';
           cycleFollows++;
-          localStorage.setItem(storagePrefix + 'cycle', String(cycleFollows));
+          localStorage.setItem('um_fb_cycle', String(cycleFollows));
           updateUI();
           console.log(`Followed ${user}: eligible follow back`);
         } else {
@@ -834,22 +818,20 @@
       return proc;
     }
 
-    async function finishPhase() {
-      localStorage.setItem(storagePrefix + 'phase', phase);
+    async function finishPage() {
       if (cycleFollows >= fbMaxPerPeriod) {
-        console.log('Reached fbMaxPerPeriod in this cycle');
+        console.log('Reached fbMaxPerPeriod in this cycle, stopping.');
         return;
       }
       if (!followUnv) {
-        console.log('FollowUnv is off, staying on verified only');
+        console.log('Follow Unverified is off, stopping after verified page.');
         return;
       }
-      if (phase === 'verified') {
-        console.log('Verified phase done with < max follows, switching to unverified');
-        localStorage.setItem(storagePrefix + 'phase', 'unverified');
+      if (isVerified) {
+        console.log(`Verified page done with ${cycleFollows}/${fbMaxPerPeriod}, switching to unverified.`);
         window.location.href = normalUrl;
       } else {
-        console.log('Unverified phase done, cycle complete');
+        console.log(`Unverified page done with ${cycleFollows}/${fbMaxPerPeriod}, cycle complete.`);
       }
     }
 
@@ -868,25 +850,24 @@
               continue;
             }
             if (cycleFollows >= fbMaxPerPeriod) {
-              console.log('Reached follow-back limit for this cycle');
+              console.log('Reached fbMaxPerPeriod in loop, stopping.');
               return;
             }
             const proc = await processBatch();
             scanSincePause += proc;
-            const limit = phase === 'verified' ? fbScanMax : SMALL_SCAN_LIMIT;
             if (scanSincePause >= scPauseCount) {
               await pauseWithCountdown(scPauseSeconds);
               scanSincePause = 0;
             }
-            if (total >= limit) {
-              await finishPhase();
+            if (total >= SMALL_SCAN_LIMIT) {
+              await finishPage();
               return;
             }
             window.scrollBy({ top: window.innerHeight });
             const curr = window.scrollY;
             if (curr === lastScroll) {
               if (Date.now() - lastScrollTime > 6000) {
-                await finishPhase();
+                await finishPage();
                 return;
               }
             } else {

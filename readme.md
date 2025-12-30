@@ -1,7 +1,5 @@
 # [Donations Appreciated](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat")
 
-![Donate to YanaHeat]([https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif](https://github.com/user-attachments/assets/db6433bf-d2f7-45c2-8a7e-4900db09e55f))
-
 # 𝕏-Mutual-Manager-Pro
 
 ## After the initial default "FB Scan Max: 400" it'll only scan 50 until reset.

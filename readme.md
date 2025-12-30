@@ -1,5 +1,9 @@
 
-[![Donate to YanaHeat](https://github.com/user-attachments/assets/ab9431-066d-4977-b2d1-ecf4FB3146d2)](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate via PayPal")
+# Donations Appreciated
+
+<a href="https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4" title="Donate to YanaHeat">
+  <img width="515" height="243" alt="Donate Button" src="https://github.com/user-attachments/assets/ab9431-066d-4977-b2d1-ecf4FB3146d2" />
+</a>
 
 # 𝕏-Mutual-Manager-Pro
 

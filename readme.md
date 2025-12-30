@@ -1,5 +1,5 @@
 
-# [Donations Appreciated](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat")⬅️✅🙏
+# [Donations Appreciated](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat")⬅️✅🙂🙏
 
 # 𝕏-Mutual-Manager-Pro
 

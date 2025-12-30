@@ -1,6 +1,6 @@
 # 𝕏-Mutual-Manager-Pro
 
-## After the default "FB Scan Max: 400" will only scan 50 until reset.
+## After the initial default "FB Scan Max: 400" will only scan 50 until reset.
 <img width="1600" height="900" alt="YanaSn0w1_firefox_VeGbJLdvBp_2" src="https://github.com/user-attachments/assets/d2aeb3eb-22a4-4a33-b63b-a19cabcf6307" />
 
 # 𝕏-Scheduler

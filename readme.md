@@ -1,5 +1,6 @@
 
 # [Donations Appreciated](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat")⬅️🙂🙏
+<img width="452" height="38" alt="firefox_Prac4JqZHh" src="https://github.com/user-attachments/assets/9fab8d63-f545-4b94-8e73-63bc149fb303" />
 
 # 𝕏-Mutual-Manager-Pro
 

@@ -1,3 +1,9 @@
+# Donations appreciated.
+
+<url https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 />
+
+Check out [GitHub](https://github.com "GitHub's homepage").
+
 # 𝕏-Mutual-Manager-Pro
 
 ## After the initial default "FB Scan Max: 400" it'll only scan 50 until reset.

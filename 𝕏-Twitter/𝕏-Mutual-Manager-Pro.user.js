@@ -2,7 +2,6 @@
 // @name         𝕏-Mutual-Manager-Pro
 // @namespace    http://tampermonkey.net/
 // @version      1
-// @description  Mode 1: IFB All 14 every 15 minutes. Mode 2: UF user who UF or never FB.
 // @author       YanaHeat
 // @match        https://x.com/*follow*
 // @grant        none
@@ -98,8 +97,14 @@
 
   function isRateLimited() {
     const toast = document.querySelector('[data-testid="toast"]');
-    if (toast && toast.textContent.toLowerCase().includes('rate limit')) {
-      console.log('RATE LIMIT DETECTED!');
+    if (!toast) return false;
+    const msg = toast.textContent.toLowerCase();
+    if (
+      msg.includes('rate limit') ||
+      msg.includes('unable to follow more people') ||
+      msg.includes('you are unable to follow')
+    ) {
+      console.log('FOLLOW/LIMIT TOAST DETECTED:', msg);
       return true;
     }
     return false;
@@ -770,6 +775,20 @@
       scanTimerSpan.textContent = '00:00:00';
     }
 
+    async function handleDailyFollowCap() {
+      const seconds = ACTION_CD / 1000;
+      console.log('Daily follow cap hit, waiting 15 minutes then reloading verified followers');
+      for (let i = seconds; i >= 0; i--) {
+        const h = String(Math.floor(i / 3600)).padStart(2, '0');
+        const m = String(Math.floor((i % 3600) / 60)).padStart(2, '0');
+        const s = String(i % 60).padStart(2, '0');
+        scanTimerSpan.textContent = `${h}:${m}:${s}`;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      scanTimerSpan.textContent = '00:00:00';
+      window.location.href = verifiedUrl;
+    }
+
     async function processBatch() {
       let cells = getCells().filter(c => !processed.has(getUsername(c)));
       let batch = cells.slice(0, BATCH_SIZE);
@@ -824,19 +843,11 @@
           followBackBtn.click();
           await new Promise(r => setTimeout(r, 800));
           if (isRateLimited()) {
-            await startFbCooldown();
-            await new Promise(resolve => {
-              const waitInterval = setInterval(() => {
-                if (fbRemaining <= 0) {
-                  clearInterval(waitInterval);
-                  resolve();
-                }
-              }, 1000);
-            });
-            if (!cell.querySelector('button[aria-label*="Follow back @"]')) {
-              success = true;
-            }
-            continue;
+            running = false;
+            paused = true;
+            startBtn.textContent = 'Start';
+            await handleDailyFollowCap();
+            return proc;
           }
           if (!cell.querySelector('button[aria-label*="Follow back @"]')) {
             success = true;

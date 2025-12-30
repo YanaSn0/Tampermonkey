@@ -4,7 +4,7 @@
 
 # [𝕏-Mutual-Manager-Pro](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro.user.js "𝕏-Mutual-Manager-Pro")
 
-## After "FB Scan Max" it'll only scan 50 until manually reset to avoid scroll rate limit.
+## Scans 50 after "FB Scan Max" to avoid scroll rate limit.
 
 - Unfollow only removes non mutual unless filter bots.
 <img width="1600" height="900" alt="YanaSn0w1_firefox_VeGbJLdvBp_2" src="https://github.com/user-attachments/assets/d2aeb3eb-22a4-4a33-b63b-a19cabcf6307" />

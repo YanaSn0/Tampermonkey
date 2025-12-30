@@ -32,7 +32,7 @@
   const ACTION_CD = 15 * 60 * 1000;
   const SC_MAX_UNFOLLOW = 30000;
 
-  const SMALL_SCAN_LIMIT = 50;
+  const PAGE_SCAN_LIMIT = 50;
 
   const path = window.location.pathname;
   const parts = path.split('/').filter(p => p);
@@ -465,7 +465,6 @@
   let running = false;
   let paused = true;
 
-  // UNFOLLOW MODE
   if (mode === 'unfollow') {
     modeLine.textContent = 'Mode: Unfollow non-mutuals + bots';
     actionLine.innerHTML = `Unfollows: <span id="action-count">0/${UF_MAX_PER_PERIOD}</span><span id="timer"></span>`;
@@ -690,23 +689,65 @@
     };
 
   } else {
-    // FOLLOW-BACK MODE
     modeLine.textContent = `Mode: Follow Back (${isVerified ? 'Verified' : 'All'} Followers)`;
-    actionLine.innerHTML = `FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span>`;
-    scanLine.innerHTML = `Scan: <span id="scan-count">0/50</span> <span id="scan-timer">00:00:00</span>`;
+    actionLine.innerHTML = `
+      FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span>
+      <span id="fb-timer">00:00:00</span>
+    `;
+    scanLine.innerHTML = `Scan: <span id="scan-count">0/${PAGE_SCAN_LIMIT}</span> <span id="scan-timer">00:00:00</span>`;
 
     const fbCountSpan = document.getElementById('fb-count-val');
+    const fbTimerSpan = document.getElementById('fb-timer');
     const scanCountSpan = document.getElementById('scan-count');
     const scanTimerSpan = document.getElementById('scan-timer');
 
     let processed = new Set();
-    let total = 0;
+    let scanTotal = 0;
     let cycleFollows = parseInt(localStorage.getItem('um_fb_cycle') || '0');
     const followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
 
+    let fbCooldownEnd = parseInt(localStorage.getItem('um_fb_cooldownEnd') || '0');
+    let fbCooldownRemaining = 0;
+    let fbCooldownInt = null;
+
+    function updateCooldownUI() {
+      const h = String(Math.floor(fbCooldownRemaining / 3600)).padStart(2, '0');
+      const m = String(Math.floor((fbCooldownRemaining % 3600) / 60)).padStart(2, '0');
+      const s = String(fbCooldownRemaining % 60).padStart(2, '0');
+      fbTimerSpan.textContent = `${h}:${m}:${s}`;
+    }
+
+    function startCooldown() {
+      fbCooldownEnd = Date.now() + ACTION_CD;
+      localStorage.setItem('um_fb_cooldownEnd', String(fbCooldownEnd));
+      fbCooldownRemaining = Math.floor(ACTION_CD / 1000);
+      updateCooldownUI();
+      if (fbCooldownInt) clearInterval(fbCooldownInt);
+      fbCooldownInt = setInterval(() => {
+        fbCooldownRemaining = Math.max(0, Math.floor((fbCooldownEnd - Date.now()) / 1000));
+        updateCooldownUI();
+        if (fbCooldownRemaining <= 0) {
+          clearInterval(fbCooldownInt);
+          fbCooldownInt = null;
+          localStorage.removeItem('um_fb_cooldownEnd');
+          localStorage.setItem('um_fb_cycle', '0');
+          cycleFollows = 0;
+          window.location.href = verifiedUrl;
+        }
+      }, 1000);
+    }
+
+    if (fbCooldownEnd > Date.now()) {
+      fbCooldownRemaining = Math.floor((fbCooldownEnd - Date.now()) / 1000);
+      startCooldown();
+    } else {
+      fbCooldownRemaining = 0;
+      updateCooldownUI();
+    }
+
     function updateUI() {
       fbCountSpan.textContent = `${cycleFollows}/${fbMaxPerPeriod}`;
-      scanCountSpan.textContent = `${total}/50`;
+      scanCountSpan.textContent = `${scanTotal}/${PAGE_SCAN_LIMIT}`;
     }
 
     async function pauseWithCountdown(seconds) {
@@ -719,23 +760,6 @@
       }
       scanTimerSpan.textContent = '00:00:00';
     }
-
-    async function handleDailyFollowCap() {
-      const seconds = ACTION_CD / 1000;
-      console.log('Daily follow cap hit, waiting 15 minutes then reloading verified followers');
-      for (let i = seconds; i >= 0; i--) {
-        const h = String(Math.floor(i / 3600)).padStart(2, '0');
-        const m = String(Math.floor((i % 3600) / 60)).padStart(2, '0');
-        const s = String(i % 60).padStart(2, '0');
-        scanTimerSpan.textContent = `${h}:${m}:${s}`;
-        await new Promise(r => setTimeout(r, 1000));
-      }
-      scanTimerSpan.textContent = '00:00:00';
-      localStorage.setItem('um_fb_cycle', '0');
-      window.location.href = verifiedUrl;
-    }
-
-    updateUI();
 
     async function processBatch() {
       let cells = getCells().filter(c => !processed.has(getUsername(c)));
@@ -750,11 +774,11 @@
 
       let proc = 0;
       for (let cell of batch) {
-        if (paused || cycleFollows >= fbMaxPerPeriod || total >= SMALL_SCAN_LIMIT) break;
+        if (paused || cycleFollows >= fbMaxPerPeriod || scanTotal >= PAGE_SCAN_LIMIT) break;
 
         const user = getUsername(cell);
         processed.add(user);
-        total++;
+        scanTotal++;
         proc++;
         updateUI();
 
@@ -792,10 +816,11 @@
           followBackBtn.click();
           await new Promise(r => setTimeout(r, 800));
           if (isRateLimited()) {
+            console.log('Daily cap hit, starting cooldown');
             running = false;
             paused = true;
             startBtn.textContent = 'Start';
-            await handleDailyFollowCap();
+            startCooldown();
             return proc;
           }
           if (!cell.querySelector('button[aria-label*="Follow back @"]')) {
@@ -820,25 +845,36 @@
 
     async function finishPage() {
       if (cycleFollows >= fbMaxPerPeriod) {
-        console.log('Reached fbMaxPerPeriod in this cycle, stopping.');
+        console.log('Reached fbMaxPerPeriod, starting cooldown');
+        if (!fbCooldownInt && fbCooldownRemaining === 0) startCooldown();
         return;
       }
       if (!followUnv) {
-        console.log('Follow Unverified is off, stopping after verified page.');
+        console.log('Follow Unverified is off, stopping after this page');
+        if (cycleFollows > 0 && !fbCooldownInt && fbCooldownRemaining === 0) startCooldown();
         return;
       }
       if (isVerified) {
-        console.log(`Verified page done with ${cycleFollows}/${fbMaxPerPeriod}, switching to unverified.`);
+        console.log(`Verified page done with ${cycleFollows}/${fbMaxPerPeriod}, switching to unverified`);
         window.location.href = normalUrl;
       } else {
-        console.log(`Unverified page done with ${cycleFollows}/${fbMaxPerPeriod}, cycle complete.`);
+        console.log(`Unverified page done with ${cycleFollows}/${fbMaxPerPeriod}, stopping this cycle`);
+        if (cycleFollows > 0 && !fbCooldownInt && fbCooldownRemaining === 0) startCooldown();
       }
     }
+
+    updateUI();
 
     startBtn.onclick = () => {
       paused = !paused;
       startBtn.textContent = paused ? 'Start' : 'Pause';
       if (!running && !paused) {
+        if (fbCooldownEnd > Date.now()) {
+          console.log('Cooldown active, cannot start yet');
+          paused = true;
+          startBtn.textContent = 'Start';
+          return;
+        }
         running = true;
         (async () => {
           let lastScroll = window.scrollY;
@@ -850,7 +886,7 @@
               continue;
             }
             if (cycleFollows >= fbMaxPerPeriod) {
-              console.log('Reached fbMaxPerPeriod in loop, stopping.');
+              await finishPage();
               return;
             }
             const proc = await processBatch();
@@ -859,7 +895,7 @@
               await pauseWithCountdown(scPauseSeconds);
               scanSincePause = 0;
             }
-            if (total >= SMALL_SCAN_LIMIT) {
+            if (scanTotal >= PAGE_SCAN_LIMIT) {
               await finishPage();
               return;
             }

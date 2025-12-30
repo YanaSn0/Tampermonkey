@@ -2,7 +2,7 @@
 // @name         𝕏-Mutual-Manager-Pro
 // @namespace    http://tampermonkey.net/
 // @version      1
-// @author       YanaSn0w1
+// @author       YanaHeat
 // @match        https://x.com/*follow*
 // @grant        none
 // ==/UserScript==

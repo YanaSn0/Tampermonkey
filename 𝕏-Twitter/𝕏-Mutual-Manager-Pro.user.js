@@ -15,7 +15,6 @@
   let SKIP_KEY_WORDS = localStorage.getItem('um_skip_key_words') !== 'false';
 
   let KEY_WORDS = JSON.parse(localStorage.getItem('um_key_words')) || ['elon', 'musk', 'private', 'chat', 'dm'].map(w => w.toLowerCase());
-
   let WHITELIST = JSON.parse(localStorage.getItem('um_whitelist')) || ['YanaHeat', 'YanaSn0w1'];
 
   let scPauseCount = parseInt(localStorage.getItem('um_sc_pause_count')) || 200;
@@ -466,6 +465,7 @@
   let running = false;
   let paused = true;
 
+  // UNFOLLOW MODE
   if (mode === 'unfollow') {
     modeLine.textContent = 'Mode: Unfollow non-mutuals + bots';
     actionLine.innerHTML = `Unfollows: <span id="action-count">0/${UF_MAX_PER_PERIOD}</span><span id="timer"></span>`;
@@ -690,79 +690,36 @@
     };
 
   } else {
+    // FOLLOW-BACK MODE
     modeLine.textContent = `Mode: Follow Back (${isVerified ? 'Verified' : 'All'} Followers)`;
-    actionLine.innerHTML = `FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span> <span id="fb-timer">00:00:00</span>`;
+    actionLine.innerHTML = `FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span>`;
     scanLine.innerHTML = `Scan: <span id="scan-count">0</span> <span id="scan-timer">00:00:00</span>`;
 
     const fbCountSpan = document.getElementById('fb-count-val');
-    const fbTimerSpan = document.getElementById('fb-timer');
     const scanCountSpan = document.getElementById('scan-count');
     const scanTimerSpan = document.getElementById('scan-timer');
 
     let processed = new Set();
     let total = 0;
     let cycleFollows = 0;
-    let fbRemaining = 0;
-    let fbTimerInt = null;
-    let fbEndTime = 0;
 
     const storagePrefix = 'um_fb_';
 
-    let originalPage = localStorage.getItem(storagePrefix + 'original') || window.location.href;
-    if (!localStorage.getItem(storagePrefix + 'original')) localStorage.setItem(storagePrefix + 'original', originalPage);
-
-    fbEndTime = parseInt(localStorage.getItem(storagePrefix + 'endTime') || '0');
+    let followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
+    let phase = localStorage.getItem(storagePrefix + 'phase') || 'verified'; // 'verified' or 'unverified'
     cycleFollows = parseInt(localStorage.getItem(storagePrefix + 'cycle') || '0');
 
-    let fiftyMode = localStorage.getItem(storagePrefix + 'fiftyMode') === 'true';
-    let checkedAll = localStorage.getItem(storagePrefix + 'checkedAll') === 'true';
-    let checkLimit = checkedAll ? SMALL_SCAN_LIMIT : (fiftyMode ? SMALL_SCAN_LIMIT : fbScanMax);
+    // Always force starting on verified if Follow Unverified is on and we are on followers page but phase says 'verified'
+    if (!isVerified && phase === 'verified') {
+      window.location.href = verifiedUrl;
+      return;
+    }
 
     function updateUI() {
-      const h = String(Math.floor(fbRemaining / 3600)).padStart(2, '0');
-      const m = String(Math.floor((fbRemaining % 3600) / 60)).padStart(2, '0');
-      const s = String(fbRemaining % 60).padStart(2, '0');
-      fbTimerSpan.textContent = `${h}:${m}:${s}`;
       fbCountSpan.textContent = `${cycleFollows}/${fbMaxPerPeriod}`;
-      scanCountSpan.textContent = `${total}/${checkLimit}`;
+      const limit = phase === 'verified' ? fbScanMax : SMALL_SCAN_LIMIT;
+      scanCountSpan.textContent = `${total}/${limit}`;
     }
-
-    async function startFbCooldown() {
-      fbEndTime = Date.now() + ACTION_CD;
-      localStorage.setItem(storagePrefix + 'endTime', fbEndTime);
-      fbRemaining = Math.floor(ACTION_CD / 1000);
-      updateUI();
-      if (fbTimerInt) clearInterval(fbTimerInt);
-      fbTimerInt = setInterval(() => {
-        fbRemaining = Math.max(0, Math.floor((fbEndTime - Date.now()) / 1000));
-        updateUI();
-        if (fbRemaining <= 0) {
-          clearInterval(fbTimerInt);
-          cycleFollows = 0;
-          localStorage.setItem(storagePrefix + 'cycle', '0');
-          localStorage.removeItem(storagePrefix + 'endTime');
-          updateUI();
-        }
-      }, 1000);
-    }
-
-    if (fbEndTime > Date.now()) {
-      fbRemaining = Math.floor((fbEndTime - Date.now()) / 1000);
-      fbTimerInt = setInterval(() => {
-        fbRemaining = Math.max(0, Math.floor((fbEndTime - Date.now()) / 1000));
-        updateUI();
-        if (fbRemaining <= 0) {
-          clearInterval(fbTimerInt);
-          cycleFollows = 0;
-          localStorage.setItem(storagePrefix + 'cycle', '0');
-          localStorage.removeItem(storagePrefix + 'endTime');
-          updateUI();
-        }
-      }, 1000);
-    } else {
-      fbRemaining = 0;
-    }
-    updateUI();
 
     async function pauseWithCountdown(seconds) {
       for (let i = seconds; i >= 0; i--) {
@@ -786,11 +743,17 @@
         await new Promise(r => setTimeout(r, 1000));
       }
       scanTimerSpan.textContent = '00:00:00';
+      localStorage.setItem(storagePrefix + 'cycle', '0');
+      localStorage.setItem(storagePrefix + 'phase', 'verified');
       window.location.href = verifiedUrl;
     }
 
+    updateUI();
+
     async function processBatch() {
       let cells = getCells().filter(c => !processed.has(getUsername(c)));
+      if (!cells.length) return 0;
+      let limit = phase === 'verified' ? fbScanMax : SMALL_SCAN_LIMIT;
       let batch = cells.slice(0, BATCH_SIZE);
       if (!batch.length) return 0;
 
@@ -803,11 +766,13 @@
       let proc = 0;
       for (let cell of batch) {
         if (paused || cycleFollows >= fbMaxPerPeriod) break;
+
         const user = getUsername(cell);
         processed.add(user);
         total++;
         proc++;
         updateUI();
+        if (total >= limit) break;
 
         if (WHITELIST.includes(user)) {
           cell.style.border = '2px solid orange';
@@ -857,10 +822,7 @@
         if (success) {
           cell.style.border = '2px solid blue';
           cycleFollows++;
-          localStorage.setItem(storagePrefix + 'cycle', cycleFollows);
-          if (cycleFollows === 1 && fbRemaining === 0) {
-            startFbCooldown();
-          }
+          localStorage.setItem(storagePrefix + 'cycle', String(cycleFollows));
           updateUI();
           console.log(`Followed ${user}: eligible follow back`);
         } else {
@@ -872,34 +834,22 @@
       return proc;
     }
 
-    async function finishLogic() {
-      localStorage.setItem(storagePrefix + 'checkedAll', 'true');
-      localStorage.setItem(storagePrefix + 'fiftyMode', 'true');
-
-      const followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
-
-      if (!followUnv) {
-        if (cycleFollows > 0 && fbRemaining === 0) {
-          await startFbCooldown();
-        }
+    async function finishPhase() {
+      localStorage.setItem(storagePrefix + 'phase', phase);
+      if (cycleFollows >= fbMaxPerPeriod) {
+        console.log('Reached fbMaxPerPeriod in this cycle');
         return;
       }
-
-      if (isVerified) {
-        if (cycleFollows === 0) {
-          window.location.href = normalUrl;
-          return;
-        }
-        if (fbRemaining === 0) {
-          await startFbCooldown();
-        }
+      if (!followUnv) {
+        console.log('FollowUnv is off, staying on verified only');
         return;
+      }
+      if (phase === 'verified') {
+        console.log('Verified phase done with < max follows, switching to unverified');
+        localStorage.setItem(storagePrefix + 'phase', 'unverified');
+        window.location.href = normalUrl;
       } else {
-        if (cycleFollows > 0 && fbRemaining === 0) {
-          await startFbCooldown();
-          return;
-        }
-        window.location.href = verifiedUrl;
+        console.log('Unverified phase done, cycle complete');
       }
     }
 
@@ -918,25 +868,25 @@
               continue;
             }
             if (cycleFollows >= fbMaxPerPeriod) {
-              console.log('Reached follow-back limit for this period');
-              if (fbRemaining === 0) await startFbCooldown();
+              console.log('Reached follow-back limit for this cycle');
               return;
             }
             const proc = await processBatch();
             scanSincePause += proc;
+            const limit = phase === 'verified' ? fbScanMax : SMALL_SCAN_LIMIT;
             if (scanSincePause >= scPauseCount) {
               await pauseWithCountdown(scPauseSeconds);
               scanSincePause = 0;
             }
-            if (total >= checkLimit) {
-              await finishLogic();
+            if (total >= limit) {
+              await finishPhase();
               return;
             }
             window.scrollBy({ top: window.innerHeight });
             const curr = window.scrollY;
             if (curr === lastScroll) {
               if (Date.now() - lastScrollTime > 6000) {
-                await finishLogic();
+                await finishPhase();
                 return;
               }
             } else {

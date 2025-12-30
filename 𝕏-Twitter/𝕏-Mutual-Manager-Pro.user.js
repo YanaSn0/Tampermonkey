@@ -32,7 +32,7 @@
   const ACTION_CD = 15 * 60 * 1000;
   const SC_MAX_UNFOLLOW = 30000;
 
-  const PAGE_SCAN_LIMIT = 50;
+  const FB_SCAN_MIN = 50;
 
   const path = window.location.pathname;
   const parts = path.split('/').filter(p => p);
@@ -181,13 +181,11 @@
   resetBtn.textContent = 'Reset This Mode & Reload';
   resetBtn.style.cssText = 'padding:8px;font-weight:bold;cursor:pointer;border-radius:6px;background:#f44336;color:white;';
   resetBtn.onclick = () => {
-    if (confirm('Clear data for this mode only and reload?')) {
-      const prefix = mode === 'unfollow' ? 'um_uf_' : 'um_fb_';
-      Object.keys(localStorage)
-        .filter(key => key.startsWith(prefix))
-        .forEach(key => localStorage.removeItem(key));
-      location.reload();
-    }
+    const prefix = mode === 'unfollow' ? 'um_uf_' : 'um_fb_';
+    Object.keys(localStorage)
+      .filter(key => key.startsWith(prefix))
+      .forEach(key => localStorage.removeItem(key));
+    location.reload();
   };
   ui.appendChild(resetBtn);
 
@@ -415,7 +413,7 @@
     const followUnvCheckbox = document.createElement('input');
     followUnvCheckbox.type = 'checkbox';
     followUnvCheckbox.id = 'follow-unv';
-    followUnvCheckbox.checked = localStorage.getItem('um_fb_followUnv') === 'true';
+    followUnvCheckbox.checked = localStorage.getItem('um_fb_followUnv') !== 'false';
     followUnvCheckbox.onchange = () => {
       localStorage.setItem('um_fb_followUnv', followUnvCheckbox.checked);
     };
@@ -694,7 +692,7 @@
       FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span>
       <span id="fb-timer">00:00:00</span>
     `;
-    scanLine.innerHTML = `Scan: <span id="scan-count">0/${PAGE_SCAN_LIMIT}</span> <span id="scan-timer">00:00:00</span>`;
+    scanLine.innerHTML = `Scan: <span id="scan-count">0/${fbScanMax}</span> <span id="scan-timer">00:00:00</span>`;
 
     const fbCountSpan = document.getElementById('fb-count-val');
     const fbTimerSpan = document.getElementById('fb-timer');
@@ -704,7 +702,7 @@
     let processed = new Set();
     let scanTotal = 0;
     let cycleFollows = parseInt(localStorage.getItem('um_fb_cycle') || '0');
-    const followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
+    const followUnv = localStorage.getItem('um_fb_followUnv') !== 'false';
 
     let fbCooldownEnd = parseInt(localStorage.getItem('um_fb_cooldownEnd') || '0');
     let fbCooldownRemaining = 0;
@@ -747,7 +745,7 @@
 
     function updateUI() {
       fbCountSpan.textContent = `${cycleFollows}/${fbMaxPerPeriod}`;
-      scanCountSpan.textContent = `${scanTotal}/${PAGE_SCAN_LIMIT}`;
+      scanCountSpan.textContent = `${scanTotal}/${fbScanMax}`;
     }
 
     async function pauseWithCountdown(seconds) {
@@ -774,7 +772,7 @@
 
       let proc = 0;
       for (let cell of batch) {
-        if (paused || cycleFollows >= fbMaxPerPeriod || scanTotal >= PAGE_SCAN_LIMIT) break;
+        if (paused || cycleFollows >= fbMaxPerPeriod || scanTotal >= fbScanMax) break;
 
         const user = getUsername(cell);
         processed.add(user);
@@ -895,14 +893,14 @@
               await pauseWithCountdown(scPauseSeconds);
               scanSincePause = 0;
             }
-            if (scanTotal >= PAGE_SCAN_LIMIT) {
+            if (scanTotal >= fbScanMax) {
               await finishPage();
               return;
             }
             window.scrollBy({ top: window.innerHeight });
             const curr = window.scrollY;
             if (curr === lastScroll) {
-              if (Date.now() - lastScrollTime > 6000) {
+              if (Date.now() - lastScrollTime > 6000 && scanTotal >= FB_SCAN_MIN) {
                 await finishPage();
                 return;
               }

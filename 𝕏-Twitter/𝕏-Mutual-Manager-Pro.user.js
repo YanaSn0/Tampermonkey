@@ -10,9 +10,9 @@
 (function () {
   'use strict';
 
-  let SKIP_DEFAULT_PIC = localStorage.getItem('um_skip_default_pic') !== 'false'; // default true
-  let SKIP_NO_BIO = localStorage.getItem('um_skip_no_bio') !== 'false'; // default true
-  let SKIP_KEY_WORDS = localStorage.getItem('um_skip_key_words') !== 'false'; // default true
+  let SKIP_DEFAULT_PIC = localStorage.getItem('um_skip_default_pic') !== 'false';
+  let SKIP_NO_BIO = localStorage.getItem('um_skip_no_bio') !== 'false';
+  let SKIP_KEY_WORDS = localStorage.getItem('um_skip_key_words') !== 'false';
 
   let KEY_WORDS = JSON.parse(localStorage.getItem('um_key_words')) || ['elon', 'musk', 'private', 'chat', 'dm'].map(w => w.toLowerCase());
 
@@ -119,12 +119,10 @@
     });
   }
 
-  // UI
   const ui = document.createElement('div');
   ui.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:#fff;padding:12px;border:2px solid #000;border-radius:10px;font-family:sans-serif;font-size:13px;display:flex;flex-direction:column;gap:8px;min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-height:80vh;overflow-y:auto;';
   document.body.appendChild(ui);
 
-  // Make UI draggable
   ui.style.cursor = 'move';
   let isDragging = false;
   let startX, startY;
@@ -163,7 +161,6 @@
   const scanLine = document.createElement('div');
   ui.appendChild(scanLine);
 
-  // Mode switch button - fixed to always go to the opposite mode's correct page
   const modeSwitchBtn = document.createElement('button');
   modeSwitchBtn.style.cssText = 'padding:8px;font-weight:bold;cursor:pointer;border-radius:6px;background:#9c27b0;color:white;';
   if (isFollowingPage) {
@@ -175,7 +172,6 @@
   }
   ui.appendChild(modeSwitchBtn);
 
-  // Reset button - now only clears data for the current mode
   const resetBtn = document.createElement('button');
   resetBtn.textContent = 'Reset This Mode & Reload';
   resetBtn.style.cssText = 'padding:8px;font-weight:bold;cursor:pointer;border-radius:6px;background:#f44336;color:white;';
@@ -190,7 +186,6 @@
   };
   ui.appendChild(resetBtn);
 
-  // Collapsible sections
   function createCollapsible(title, content) {
     const details = document.createElement('details');
     const summary = document.createElement('summary');
@@ -201,7 +196,6 @@
     return details;
   }
 
-  // Bot filters section
   const botFiltersContent = document.createElement('div');
   botFiltersContent.style.display = 'flex';
   botFiltersContent.style.flexDirection = 'column';
@@ -263,7 +257,6 @@
 
   ui.appendChild(createCollapsible('Bot Filters', botFiltersContent));
 
-  // Manage Keywords section
   const keywordsContent = document.createElement('div');
   keywordsContent.style.display = 'flex';
   keywordsContent.style.flexDirection = 'column';
@@ -319,7 +312,6 @@
 
   ui.appendChild(createCollapsible('Manage Keywords', keywordsContent));
 
-  // Manage Whitelist section
   const whitelistContent = document.createElement('div');
   whitelistContent.style.display = 'flex';
   whitelistContent.style.flexDirection = 'column';
@@ -375,7 +367,6 @@
 
   ui.appendChild(createCollapsible('Manage Whitelist', whitelistContent));
 
-  // Advanced Settings section
   const advancedContent = document.createElement('div');
   advancedContent.style.display = 'flex';
   advancedContent.style.flexDirection = 'column';
@@ -470,7 +461,6 @@
   let paused = true;
 
   if (mode === 'unfollow') {
-    // UNFOLLOW MODE
     modeLine.textContent = 'Mode: Unfollow non-mutuals + bots';
     actionLine.innerHTML = `Unfollows: <span id="action-count">0/${UF_MAX_PER_PERIOD}</span><span id="timer"></span>`;
     scanLine.innerHTML = `Scan: <span id="scan-count">0/${SC_MAX_UNFOLLOW}</span> <span id="scan-timer">00:00:00</span>`;
@@ -516,6 +506,7 @@
       remainingTime = sec;
       hasActioned = true;
       updateUI();
+      if (timerInt) clearInterval(timerInt);
       timerInt = setInterval(() => {
         remainingTime--;
         updateUI();
@@ -531,7 +522,7 @@
     }
 
     function startNewTimer() {
-      clearInterval(timerInt);
+      if (timerInt) clearInterval(timerInt);
       periodStart = Date.now();
       remainingTime = Math.floor(ACTION_CD / 1000);
       hasActioned = true;
@@ -562,7 +553,17 @@
         timerSpan.textContent = ' 00:00:00';
       }
       scanCountSpan.textContent = `${total}/${SC_MAX_UNFOLLOW}`;
-      scanTimerSpan.textContent = ' 00:00:00';
+    }
+
+    async function pauseWithCountdown(seconds) {
+      for (let i = seconds; i >= 0; i--) {
+        const h = String(Math.floor(i / 3600)).padStart(2, '0');
+        const m = String(Math.floor((i % 3600) / 60)).padStart(2, '0');
+        const s = String(i % 60).padStart(2, '0');
+        scanTimerSpan.textContent = `${h}:${m}:${s}`;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+      scanTimerSpan.textContent = '00:00:00';
     }
 
     loadState();
@@ -572,7 +573,7 @@
       let batch = cells.slice(0, BATCH_SIZE);
       if (!batch.length) return 0;
 
-      window.scrollBy({top: batch[0].getBoundingClientRect().top - SCROLL_POSITION});
+      window.scrollBy({ top: batch[0].getBoundingClientRect().top - SCROLL_POSITION });
       await new Promise(r => setTimeout(r, 300));
 
       batch.forEach(c => c.style.border = '2px solid yellow');
@@ -581,6 +582,14 @@
       let processedCount = 0;
       for (let cell of batch) {
         if (paused) break;
+        if (actionedInPeriod >= UF_MAX_PER_PERIOD) {
+          paused = true;
+          running = false;
+          startBtn.textContent = 'Start';
+          console.log('Max unfollows reached, stopping');
+          break;
+        }
+
         const user = getUsername(cell);
         processed.add(user);
         total++;
@@ -594,9 +603,7 @@
         }
 
         const isMutual = !!cell.querySelector('[data-testid="userFollowIndicator"]');
-
-        const {isBotLike, reasons: botReasons} = getBotInfo(cell);
-
+        const { isBotLike, reasons: botReasons } = getBotInfo(cell);
         let reasons = [];
         if (!isMutual) reasons.push('non-mutual');
         reasons = reasons.concat(botReasons);
@@ -611,14 +618,6 @@
         if (!btn) {
           cell.style.border = '2px solid orange';
           console.log(`Skipping ${user}: no unfollow button`);
-          continue;
-        }
-
-        if (actionedInPeriod >= UF_MAX_PER_PERIOD) {
-          paused = true;
-          startBtn.textContent = 'Start';
-          cell.style.border = '2px solid purple';
-          console.log(`Pausing: max unfollows reached`);
           continue;
         }
 
@@ -649,6 +648,10 @@
         startBtn.textContent = paused ? 'Start' : 'Pause';
         return;
       }
+      if (actionedInPeriod >= UF_MAX_PER_PERIOD) {
+        console.log('Limit already reached in this period');
+        return;
+      }
       running = true;
       paused = false;
       startBtn.textContent = 'Pause';
@@ -670,18 +673,17 @@
         if (curr === lastCellsCount) stuckCount++;
         else stuckCount = 0;
         lastCellsCount = curr;
-        if (stuckCount >= STUCK_THRESHOLD) {
+        if (stuckCount >= STUCK_THRESHOLD || total >= SC_MAX_UNFOLLOW) {
           running = false;
           startBtn.textContent = 'Start';
           break;
         }
-        window.scrollBy({top: 800});
+        window.scrollBy({ top: 800 });
         await new Promise(r => setTimeout(r, 100));
       }
     };
 
   } else {
-    // FOLLOW-BACK MODE
     modeLine.textContent = `Mode: Follow Back (${isVerified ? 'Verified' : 'All'} Followers)`;
     actionLine.innerHTML = `FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span> <span id="fb-timer">00:00:00</span>`;
     scanLine.innerHTML = `Scan: <span id="scan-count">0</span> <span id="scan-timer">00:00:00</span>`;
@@ -772,7 +774,7 @@
       let batch = cells.slice(0, BATCH_SIZE);
       if (!batch.length) return 0;
 
-      window.scrollBy({top: batch[0].getBoundingClientRect().top - SCROLL_POSITION});
+      window.scrollBy({ top: batch[0].getBoundingClientRect().top - SCROLL_POSITION });
       await new Promise(r => setTimeout(r, 300));
 
       batch.forEach(c => c.style.border = '2px solid yellow');
@@ -793,7 +795,7 @@
           continue;
         }
 
-        const {isBotLike, reasons} = getBotInfo(cell);
+        const { isBotLike, reasons } = getBotInfo(cell);
         if (isBotLike) {
           cell.style.border = '2px solid purple';
           console.log(`Skipping ${user}: bot-like (${reasons.join(', ')})`);
@@ -822,7 +824,6 @@
           await new Promise(r => setTimeout(r, 800));
           if (isRateLimited()) {
             await startFbCooldown();
-            // Wait for the cooldown to finish before retrying
             await new Promise(resolve => {
               const waitInterval = setInterval(() => {
                 if (fbRemaining <= 0) {
@@ -831,7 +832,6 @@
                 }
               }, 1000);
             });
-            // After waiting, retry if the button is still present
             if (!cell.querySelector('button[aria-label*="Follow back @"]')) {
               success = true;
             }
@@ -901,6 +901,11 @@
               await new Promise(r => setTimeout(r, 300));
               continue;
             }
+            if (cycleFollows >= fbMaxPerPeriod) {
+              console.log('Reached follow-back limit for this period');
+              await finishLogic();
+              return;
+            }
             const proc = await processBatch();
             scanSincePause += proc;
             if (scanSincePause >= scPauseCount) {
@@ -911,7 +916,7 @@
               await finishLogic();
               return;
             }
-            window.scrollBy({top: window.innerHeight});
+            window.scrollBy({ top: window.innerHeight });
             const curr = window.scrollY;
             if (curr === lastScroll) {
               if (Date.now() - lastScrollTime > 6000) {

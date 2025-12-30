@@ -2,8 +2,7 @@
 // @name         𝕏-Mutual-Manager-Pro
 // @namespace    http://tampermonkey.net/
 // @version      1
-// @description  Mode 1: IFB All 14 every 15 minutes.
-// @description  Mode 2: UF user who UF or never FB.
+// @description  Mode 1: IFB All 14 every 15 minutes. Mode 2: UF user who UF or never FB.
 // @author       YanaHeat
 // @match        https://x.com/*follow*
 // @grant        none

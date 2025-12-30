@@ -858,7 +858,9 @@
           cell.style.border = '2px solid blue';
           cycleFollows++;
           localStorage.setItem(storagePrefix + 'cycle', cycleFollows);
-          if (cycleFollows === 1) await startFbCooldown();
+          if (cycleFollows === 1 && fbRemaining === 0) {
+            startFbCooldown();
+          }
           updateUI();
           console.log(`Followed ${user}: eligible follow back`);
         } else {
@@ -873,30 +875,32 @@
     async function finishLogic() {
       localStorage.setItem(storagePrefix + 'checkedAll', 'true');
       localStorage.setItem(storagePrefix + 'fiftyMode', 'true');
-      if (cycleFollows < fbMaxPerPeriod && fbRemaining === 0) {
-        await startFbCooldown();
-      }
-      if (fbRemaining > 0) {
-        await new Promise(resolve => {
-          const waitInterval = setInterval(() => {
-            if (fbRemaining <= 0) {
-              clearInterval(waitInterval);
-              resolve();
-            }
-          }, 1000);
-        });
-        await new Promise(r => setTimeout(r, 2000));
-      } else {
-        await new Promise(r => setTimeout(r, 2000));
-      }
+
       const followUnv = localStorage.getItem('um_fb_followUnv') === 'true';
-      let nextUrl;
+
       if (!followUnv) {
-        nextUrl = verifiedUrl;
-      } else {
-        nextUrl = isVerified ? normalUrl : verifiedUrl;
+        if (cycleFollows > 0 && fbRemaining === 0) {
+          await startFbCooldown();
+        }
+        return;
       }
-      window.location.href = nextUrl;
+
+      if (isVerified) {
+        if (cycleFollows === 0) {
+          window.location.href = normalUrl;
+          return;
+        }
+        if (fbRemaining === 0) {
+          await startFbCooldown();
+        }
+        return;
+      } else {
+        if (cycleFollows > 0 && fbRemaining === 0) {
+          await startFbCooldown();
+          return;
+        }
+        window.location.href = verifiedUrl;
+      }
     }
 
     startBtn.onclick = () => {
@@ -915,7 +919,7 @@
             }
             if (cycleFollows >= fbMaxPerPeriod) {
               console.log('Reached follow-back limit for this period');
-              await finishLogic();
+              if (fbRemaining === 0) await startFbCooldown();
               return;
             }
             const proc = await processBatch();

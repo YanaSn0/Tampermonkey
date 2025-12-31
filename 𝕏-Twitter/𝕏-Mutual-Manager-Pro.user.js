@@ -520,6 +520,9 @@
           hasActioned = false;
           saveState();
           updateUI();
+          setTimeout(() => {
+            if (startBtn.textContent === 'Start') startBtn.click();
+          }, 1000);
         }
       }, 1000);
     }
@@ -541,6 +544,9 @@
           hasActioned = false;
           saveState();
           updateUI();
+          setTimeout(() => {
+            if (startBtn.textContent === 'Start') startBtn.click();
+          }, 1000);
         }
       }, 1000);
     }
@@ -560,6 +566,10 @@
 
     async function pauseWithCountdown(seconds) {
       for (let i = seconds; i >= 0; i--) {
+        if (paused) {
+          scanTimerSpan.textContent = '00:00:00';
+          return;
+        }
         const h = String(Math.floor(i / 3600)).padStart(2, '0');
         const m = String(Math.floor((i % 3600) / 60)).padStart(2, '0');
         const s = String(i % 60).padStart(2, '0');
@@ -750,6 +760,10 @@
 
     async function pauseWithCountdown(seconds) {
       for (let i = seconds; i >= 0; i--) {
+        if (paused) {
+          scanTimerSpan.textContent = '00:00:00';
+          return;
+        }
         const h = String(Math.floor(i / 3600)).padStart(2, '0');
         const m = String(Math.floor((i % 3600) / 60)).padStart(2, '0');
         const s = String(i % 60).padStart(2, '0');

@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro
 // @namespace    http://tampermonkey.net/
-// @version      1
-// @author       YanaHeat
+// @version      1.4
+// @author       YanaHeat (with fixes)
 // @match        https://x.com/*follow*
 // @grant        none
 // ==/UserScript==
@@ -19,8 +19,8 @@
 
   let scPauseCount = parseInt(localStorage.getItem('um_sc_pause_count')) || 200;
   let scPauseSeconds = parseInt(localStorage.getItem('um_sc_pause_seconds')) || 30;
-  let fbMaxPerPeriod = parseInt(localStorage.getItem('um_fb_max_per_period')) || 14;
-  let fbScanMax = parseInt(localStorage.getItem('um_fb_scan_max')) || 10000;
+  let fbMaxPerPeriod = parseInt(localStorage.getItem('um_fb_max_per_period')) || 14; // Initial default 14, will set to 50 after first pass
+  let fbScanMax = parseInt(localStorage.getItem('um_fb_scan_max')) || 100;
 
   const MIN_DELAY = 200;
   const MAX_DELAY = 600;
@@ -51,6 +51,11 @@
   const verifiedUrl = `https://x.com/${username}/verified_followers`;
   const followingUrl = `https://x.com/${username}/following`;
   const normalUrl = `https://x.com/${username}/followers`;
+
+  // Redirect if on unverified page but option disabled
+  if (mode === 'followback' && !isVerified && localStorage.getItem('um_fb_followUnv') !== 'true') {
+    window.location.href = verifiedUrl;
+  }
 
   function getCells() {
     return Array.from(document.querySelectorAll('button[data-testid="UserCell"]'));
@@ -124,6 +129,13 @@
     });
   }
 
+  function resetUI() {
+    getCells().forEach(cell => {
+      cell.style.border = '';
+    });
+    console.log('UI reset complete');
+  }
+
   const ui = document.createElement('div');
   ui.style.cssText = 'position:fixed;top:10px;right:10px;z-index:9999;background:#fff;padding:12px;border:2px solid #000;border-radius:10px;font-family:sans-serif;font-size:13px;display:flex;flex-direction:column;gap:8px;min-width:280px;box-shadow:0 4px 12px rgba(0,0,0,0.3);max-height:80vh;overflow-y:auto;';
   document.body.appendChild(ui);
@@ -185,6 +197,9 @@
     Object.keys(localStorage)
       .filter(key => key.startsWith(prefix))
       .forEach(key => localStorage.removeItem(key));
+    localStorage.removeItem('um_fb_firstPass');
+    localStorage.removeItem('um_fb_firstScan');
+    resetUI();
     location.reload();
   };
   ui.appendChild(resetBtn);
@@ -416,6 +431,9 @@
     followUnvCheckbox.checked = localStorage.getItem('um_fb_followUnv') !== 'false';
     followUnvCheckbox.onchange = () => {
       localStorage.setItem('um_fb_followUnv', followUnvCheckbox.checked);
+      if (!followUnvCheckbox.checked && !isVerified) {
+        window.location.href = verifiedUrl;
+      }
     };
     const followUnvLabel = document.createElement('label');
     followUnvLabel.htmlFor = 'follow-unv';
@@ -450,7 +468,7 @@
     fbScanMaxInput.value = fbScanMax;
     fbScanMaxInput.min = '1';
     fbScanMaxInput.onchange = () => {
-      fbScanMax = parseInt(fbScanMaxInput.value) || 10000;
+      fbScanMax = parseInt(fbScanMaxInput.value) || 100;
       localStorage.setItem('um_fb_scan_max', fbScanMax);
     };
     fbScanMaxDiv.appendChild(fbScanMaxLabel);
@@ -712,11 +730,24 @@
     let processed = new Set();
     let scanTotal = 0;
     let cycleFollows = parseInt(localStorage.getItem('um_fb_cycle') || '0');
-    const followUnv = localStorage.getItem('um_fb_followUnv') !== 'false';
 
     let fbCooldownEnd = parseInt(localStorage.getItem('um_fb_cooldownEnd') || '0');
     let fbCooldownRemaining = 0;
     let fbCooldownInt = null;
+
+    if (localStorage.getItem('um_fb_firstPass') === null) {
+      localStorage.setItem('um_fb_firstPass', 'true');
+    }
+    let firstPass = localStorage.getItem('um_fb_firstPass') === 'true';
+
+    if (localStorage.getItem('um_fb_firstScan') === null) {
+      localStorage.setItem('um_fb_firstScan', 'true');
+    }
+    let firstScan = localStorage.getItem('um_fb_firstScan') === 'true';
+
+    function getFollowUnv() {
+      return localStorage.getItem('um_fb_followUnv') === 'true';
+    }
 
     function updateCooldownUI() {
       const h = String(Math.floor(fbCooldownRemaining / 3600)).padStart(2, '0');
@@ -740,6 +771,7 @@
           localStorage.removeItem('um_fb_cooldownEnd');
           localStorage.setItem('um_fb_cycle', '0');
           cycleFollows = 0;
+          resetUI();
           window.location.href = verifiedUrl;
         }
       }, 1000);
@@ -856,22 +888,31 @@
     }
 
     async function finishPage() {
-      if (cycleFollows >= fbMaxPerPeriod) {
-        console.log('Reached fbMaxPerPeriod, starting cooldown');
-        if (!fbCooldownInt && fbCooldownRemaining === 0) startCooldown();
-        return;
+      if (firstPass) {
+        localStorage.setItem('um_fb_firstPass', 'false');
+        firstPass = false;
+        fbMaxPerPeriod = 50;
+        localStorage.setItem('um_fb_max_per_period', 50);
+        console.log('First pass complete: Forced FB max to 50');
       }
-      if (!followUnv) {
+      if (firstScan && scanTotal >= fbScanMax) {
+        localStorage.setItem('um_fb_firstScan', 'false');
+        firstScan = false;
+        fbScanMax = 50;
+        localStorage.setItem('um_fb_scan_max', 50);
+        console.log('First scan complete: Set scan max to 50 for next times');
+      }
+      if (!getFollowUnv()) {
         console.log('Follow Unverified is off, stopping after this page');
-        if (cycleFollows > 0 && !fbCooldownInt && fbCooldownRemaining === 0) startCooldown();
+        if (cycleFollows > 0 || scanTotal >= fbScanMax) startCooldown();
         return;
       }
       if (isVerified) {
-        console.log(`Verified page done with ${cycleFollows}/${fbMaxPerPeriod}, switching to unverified`);
+        console.log(`Verified page done with ${cycleFollows}/${fbMaxPerPeriod}, switching to unverified if enabled`);
         window.location.href = normalUrl;
       } else {
         console.log(`Unverified page done with ${cycleFollows}/${fbMaxPerPeriod}, stopping this cycle`);
-        if (cycleFollows > 0 && !fbCooldownInt && fbCooldownRemaining === 0) startCooldown();
+        if (cycleFollows > 0 || scanTotal >= fbScanMax) startCooldown();
       }
     }
 

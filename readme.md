@@ -11,7 +11,7 @@
 
 # [𝕏-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Scheduler.user.js "𝕏-Scheduler")
 
-## One click, 8 posts scheduled every 2 hours.
+## One click, 8 posts scheduled.
 
 - Use your own messages. Set date to same day.
 <img width="1600" height="900" alt="YanaHeat_firefox_CpfEs2qYNS" src="https://github.com/user-attachments/assets/02187a8a-f926-49a6-9faf-88f1fe5b65eb" />

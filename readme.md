@@ -13,5 +13,5 @@
 ## One click, 8 posts scheduled.
 
 - 1.1 fixed: Sets date while loading to current date. Add generate random post button.
-<img width="1600" height="900" alt="YanaHeat_firefox_CpfEs2qYNS" src="https://github.com/user-attachments/assets/02187a8a-f926-49a6-9faf-88f1fe5b65eb" />
+<img width="1600" height="900" alt="YanaHeat_firefox_7BatsMFKUJ" src="https://github.com/user-attachments/assets/5449c09d-953b-4ae5-b78f-f36bbb98ebbb" />
 

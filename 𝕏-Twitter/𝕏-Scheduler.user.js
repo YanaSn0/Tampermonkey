@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         X Post Scheduler UI
+// @name         𝕏-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.2.3
+// @version      1.1
 // @description  UI for scheduling X posts.
 // @author       YanaHeat
 // @match        https://x.com/*

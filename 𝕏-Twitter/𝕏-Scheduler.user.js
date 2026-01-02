@@ -1,13 +1,14 @@
 // ==UserScript==
 // @name         𝕏-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  UI for scheduling X posts.
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
+// @grant        GM_listValues
 // ==/UserScript==
 
 (function() {
@@ -25,8 +26,8 @@
         gnGreetings: ["Good night", "GN", "Can I get a GN?"],
         closers: [
             "fam", "legend", "babe", "everyone", "friends",
-            "crew", "squad", "darling", "champ", "star",
-            "buddy", "pal", "mate", "hero", "boss"
+            "crew", "squad", "darling", "champ", "baby",
+            "unc", "bro", "mate", "hun", "dear"
         ],
         morningEmojis: ["🌹", "😽", "☕", "🌅", "😊", "🌻", "✨"],
         afternoonEmojis: ["⚡", "💖", "🚀", "🌈", "🥳", "🔥", "🍀"],
@@ -229,7 +230,7 @@
       }
     }
 
-    // Function to generate random messages in specific order: 2 GM, 2 GA, 2 GE, 2 GN
+    // Function to generate random messages in grouped order: 2 GM, 2 GA, 2 GE, 2 GN
     function generateRandomMessages() {
         const groups = [
             {greetings: defaults.gmGreetings, emojiPool: defaults.morningEmojis, count: 2},
@@ -239,9 +240,16 @@
         ];
         const messages = [];
         groups.forEach(group => {
+            let availableGreetings = [...group.greetings]; // Copy to shuffle
             for (let i = 0; i < group.count; i++) {
-                const greeting = group.greetings[Math.floor(Math.random() * group.greetings.length)];
-                const closer = defaults.closers[Math.floor(Math.random() * defaults.closers.length)];
+                if (availableGreetings.length === 0) availableGreetings = [...group.greetings]; // Reset if needed, though unlikely
+                const greetingIndex = Math.floor(Math.random() * availableGreetings.length);
+                const greeting = availableGreetings.splice(greetingIndex, 1)[0];
+                const addCloser = !greeting.startsWith("Can I get a");
+                let closer = '';
+                if (addCloser) {
+                    closer = defaults.closers[Math.floor(Math.random() * defaults.closers.length)];
+                }
                 let numEmojis;
                 if (maxEmojis === 'random') {
                     numEmojis = Math.random() < 0.3 ? 0 : (Math.random() < 0.7 ? 1 : 2);
@@ -253,7 +261,7 @@
                     const emoji = group.emojiPool[Math.floor(Math.random() * group.emojiPool.length)];
                     emojisStr += emoji;
                 }
-                const message = `${greeting} ${closer}${emojisStr ? ' ' + emojisStr : ''}`;
+                const message = addCloser ? `${greeting} ${closer}${emojisStr ? ' ' + emojisStr : ''}` : `${greeting}${emojisStr ? ' ' + emojisStr : ''}`;
                 messages.push(message);
             }
         });
@@ -394,9 +402,9 @@
         updateMsgList();
     });
 
-    // Reset to defaults
+    // Reset to defaults - now clears ALL stored keys
     document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
-        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages'].forEach(key => GM_deleteValue(key));
+        GM_listValues().forEach(key => GM_deleteValue(key));
         location.reload();
     });
 

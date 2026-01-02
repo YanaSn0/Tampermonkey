@@ -13,5 +13,6 @@
 ## One click, 8 posts scheduled.
 
 - 1.1 fixed: Sets date while loading to current date. Add generate random post button.
+- 1.2 fixed: No more duplicate messages.
 <img width="1600" height="900" alt="YanaHeat_firefox_7BatsMFKUJ" src="https://github.com/user-attachments/assets/5449c09d-953b-4ae5-b78f-f36bbb98ebbb" />
 

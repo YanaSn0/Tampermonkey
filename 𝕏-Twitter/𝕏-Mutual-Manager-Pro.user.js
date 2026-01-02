@@ -723,7 +723,7 @@
 
   } else {
     const followUnvEnabled = getFollowUnv();
-    modeLine.textContent = `Mode: Follow Back (${followUnvEnabled ? 'All' : (isVerified ? 'Verified' : 'Verified')} Followers)`;
+    modeLine.textContent = `Mode: Follow Back (${followUnvEnabled ? 'All' : (isVerified ? 'Verified' : 'Verified') } Followers)`;
 
     actionLine.innerHTML = `
       FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span>

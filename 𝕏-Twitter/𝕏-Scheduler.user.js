@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X Post Scheduler UI
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2.3
 // @description  UI for scheduling X posts.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -19,16 +19,20 @@
         startTime: '23:59',
         intervalHours: 2,
         intervalMins: 0,
-        messages: [
-            "Can I get a GM? 🌹",
-            "Good morning fam 😽",
-            "Good afternoon legend ⚡",
-            "Can I get a GA? 💖",
-            "Good evening babe 🕸️",
-            "Can I get a GE? 🥰",
-            "Good night ⭐",
-            "Can I get a GN? 🤍"
-        ]
+        gmGreetings: ["Good morning", "GM", "Can I get a GM?"],
+        gaGreetings: ["Good afternoon", "GA", "Can I get a GA?"],
+        geGreetings: ["Good evening", "GE", "Can I get a GE?"],
+        gnGreetings: ["Good night", "GN", "Can I get a GN?"],
+        closers: [
+            "fam", "legend", "babe", "everyone", "friends",
+            "crew", "squad", "darling", "champ", "star",
+            "buddy", "pal", "mate", "hero", "boss"
+        ],
+        morningEmojis: ["🌹", "😽", "☕", "🌅", "😊", "🌻", "✨"],
+        afternoonEmojis: ["⚡", "💖", "🚀", "🌈", "🥳", "🔥", "🍀"],
+        eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫"],
+        maxEmojis: 1,
+        messages: []  // Will be generated if empty
     };
 
     // Function to wait for element
@@ -225,18 +229,55 @@
       }
     }
 
+    // Function to generate random messages in specific order: 2 GM, 2 GA, 2 GE, 2 GN
+    function generateRandomMessages() {
+        const groups = [
+            {greetings: defaults.gmGreetings, emojiPool: defaults.morningEmojis, count: 2},
+            {greetings: defaults.gaGreetings, emojiPool: defaults.afternoonEmojis, count: 2},
+            {greetings: defaults.geGreetings, emojiPool: defaults.eveningNightEmojis, count: 2},
+            {greetings: defaults.gnGreetings, emojiPool: defaults.eveningNightEmojis, count: 2}
+        ];
+        const messages = [];
+        groups.forEach(group => {
+            for (let i = 0; i < group.count; i++) {
+                const greeting = group.greetings[Math.floor(Math.random() * group.greetings.length)];
+                const closer = defaults.closers[Math.floor(Math.random() * defaults.closers.length)];
+                let numEmojis;
+                if (maxEmojis === 'random') {
+                    numEmojis = Math.random() < 0.3 ? 0 : (Math.random() < 0.7 ? 1 : 2);
+                } else {
+                    numEmojis = maxEmojis;
+                }
+                let emojisStr = '';
+                for (let j = 0; j < numEmojis; j++) {
+                    const emoji = group.emojiPool[Math.floor(Math.random() * group.emojiPool.length)];
+                    emojisStr += emoji;
+                }
+                const message = `${greeting} ${closer}${emojisStr ? ' ' + emojisStr : ''}`;
+                messages.push(message);
+            }
+        });
+        return messages;
+    }
+
     // Load settings from storage
     let startDate = GM_getValue('startDate', defaults.startDate);
     const today = new Date().toISOString().split('T')[0];
     if (startDate < today) {
         startDate = today;
-        // Save the updated date immediately
         GM_setValue('startDate', startDate);
     }
     let startTime = GM_getValue('startTime', defaults.startTime);
     let intervalHours = GM_getValue('intervalHours', defaults.intervalHours);
     let intervalMins = GM_getValue('intervalMins', defaults.intervalMins);
+    let maxEmojis = GM_getValue('maxEmojis', defaults.maxEmojis);
     let messages = GM_getValue('messages', defaults.messages);
+
+    // If no saved messages, generate random ones
+    if (messages.length === 0) {
+        messages = generateRandomMessages();
+        GM_setValue('messages', messages);
+    }
 
     // Function to save to storage
     function saveSettings() {
@@ -244,6 +285,7 @@
         GM_setValue('startTime', startTime);
         GM_setValue('intervalHours', intervalHours);
         GM_setValue('intervalMins', intervalMins);
+        GM_setValue('maxEmojis', maxEmojis);
         GM_setValue('messages', messages);
     }
 
@@ -268,8 +310,17 @@
         <label style="display:block; margin-bottom:10px;">Start Time: <input type="time" id="startTime" value="${startTime}" style="padding:5px; border:1px solid #ced4da; border-radius:4px;"></label>
         <label style="display:block; margin-bottom:10px;">Interval: <input type="number" id="intervalHours" value="${intervalHours}" min="0" style="width:60px; padding:5px; border:1px solid #ced4da; border-radius:4px;"> hours
         <input type="number" id="intervalMins" value="${intervalMins}" min="0" max="59" style="width:60px; padding:5px; border:1px solid #ced4da; border-radius:4px;"> mins</label>
+        <label style="display:block; margin-bottom:10px;">Emojis per Message:
+            <select id="maxEmojis" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
+                <option value="0" ${maxEmojis === 0 ? 'selected' : ''}>0</option>
+                <option value="1" ${maxEmojis === 1 ? 'selected' : ''}>1</option>
+                <option value="2" ${maxEmojis === 2 ? 'selected' : ''}>2</option>
+                <option value="random" ${maxEmojis === 'random' ? 'selected' : ''}>Random (0-2)</option>
+            </select>
+        </label>
         <textarea id="newMsg" placeholder="Add new message" style="width:100%; height:60px; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-bottom:10px;"></textarea>
         <button id="addMsgBtn" style="padding:6px 12px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Add Message</button>
+        <button id="generateRandomBtn" style="padding:6px 12px; background:#17a2b8; color:white; border:none; border-radius:4px; cursor:pointer; margin-left:10px;">Generate Random Messages</button>
         <button id="resetDefaultsBtn" style="padding:6px 12px; background:#6c757d; color:white; border:none; border-radius:4px; cursor:pointer; margin-left:10px;">Reset to Defaults</button>
         <div id="msgList" style="margin-top:15px;"></div>
         <button id="previewSlotsBtn" style="padding:6px 12px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer; margin-top:10px;">Preview Schedules</button>
@@ -287,7 +338,7 @@
     let initialX;
     let initialY;
     panel.addEventListener('mousedown', (e) => {
-        if (e.target.id !== 'closePanel' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+        if (e.target.id !== 'closePanel' && e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'SELECT') {
             isDragging = true;
             initialX = e.clientX - panel.getBoundingClientRect().left;
             initialY = e.clientY - panel.getBoundingClientRect().top;
@@ -336,9 +387,16 @@
         }
     });
 
+    // Generate random messages
+    document.getElementById('generateRandomBtn').addEventListener('click', () => {
+        messages = generateRandomMessages();
+        saveSettings();
+        updateMsgList();
+    });
+
     // Reset to defaults
     document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
-        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'messages'].forEach(key => GM_deleteValue(key));
+        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages'].forEach(key => GM_deleteValue(key));
         location.reload();
     });
 
@@ -365,6 +423,13 @@
         intervalMins = parseInt(document.getElementById('intervalMins').value) || 0;
         if (intervalMins > 59) intervalMins = 59;
         document.getElementById('intervalMins').value = intervalMins;
+        saveSettings();
+    });
+
+    // Update max emojis on change
+    document.getElementById('maxEmojis').addEventListener('change', () => {
+        const value = document.getElementById('maxEmojis').value;
+        maxEmojis = value === 'random' ? 'random' : parseInt(value);
         saveSettings();
     });
 

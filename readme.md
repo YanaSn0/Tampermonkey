@@ -12,6 +12,6 @@
 
 ## One click, 8 posts scheduled.
 
-- Use your own messages. Set date to same day.
+- 1.1 fixed: Now sets date while loading to current date.
 <img width="1600" height="900" alt="YanaHeat_firefox_CpfEs2qYNS" src="https://github.com/user-attachments/assets/02187a8a-f926-49a6-9faf-88f1fe5b65eb" />
 

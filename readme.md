@@ -13,8 +13,6 @@
 
 ## One click, 8 posts scheduled every 2 hours.
 
-- Change to your own messages.
-- Use before 11:59pm, set date to same day.
-- Click post > schedule > scheduled posts to manually add pics.
+- Use your own messages. Set date to same day.
 <img width="1600" height="900" alt="YanaHeat_firefox_CpfEs2qYNS" src="https://github.com/user-attachments/assets/02187a8a-f926-49a6-9faf-88f1fe5b65eb" />
 

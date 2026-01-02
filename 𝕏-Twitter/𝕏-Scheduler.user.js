@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         X Post Scheduler UI
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      1.1
 // @description  UI for scheduling X posts.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -20,14 +20,14 @@
         intervalHours: 2,
         intervalMins: 0,
         messages: [
-            "Can I get a GM? 💕",
-            "Good morning legend 🌞",
-            "Good morning beautiful 😍",
-            "Can I get a GA? 💕",
-            "Good evening love 😘",
-            "Can I get a GE? 😊",
-            "Good night 🌊",
-            "Can I get a GN? 💫"
+            "Can I get a GM? 🌹",
+            "Good morning fam 😽",
+            "Good afternoon legend ⚡",
+            "Can I get a GA? 💖",
+            "Good evening babe 🕸️",
+            "Can I get a GE? 🥰",
+            "Good night ⭐",
+            "Can I get a GN? 🤍"
         ]
     };
 
@@ -227,6 +227,12 @@
 
     // Load settings from storage
     let startDate = GM_getValue('startDate', defaults.startDate);
+    const today = new Date().toISOString().split('T')[0];
+    if (startDate < today) {
+        startDate = today;
+        // Save the updated date immediately
+        GM_setValue('startDate', startDate);
+    }
     let startTime = GM_getValue('startTime', defaults.startTime);
     let intervalHours = GM_getValue('intervalHours', defaults.intervalHours);
     let intervalMins = GM_getValue('intervalMins', defaults.intervalMins);

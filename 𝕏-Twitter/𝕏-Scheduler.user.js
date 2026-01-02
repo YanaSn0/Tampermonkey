@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.2
+// @version      1.3
 // @description  UI for scheduling X posts.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -240,11 +240,14 @@
         ];
         const messages = [];
         groups.forEach(group => {
-            let availableGreetings = [...group.greetings]; // Copy to shuffle
+            let usedGreetings = [];
             for (let i = 0; i < group.count; i++) {
-                if (availableGreetings.length === 0) availableGreetings = [...group.greetings]; // Reset if needed, though unlikely
-                const greetingIndex = Math.floor(Math.random() * availableGreetings.length);
-                const greeting = availableGreetings.splice(greetingIndex, 1)[0];
+                let greeting;
+                do {
+                    greeting = group.greetings[Math.floor(Math.random() * group.greetings.length)];
+                } while (usedGreetings.includes(greeting) && usedGreetings.length < group.greetings.length);
+
+                usedGreetings.push(greeting);
                 const addCloser = !greeting.startsWith("Can I get a");
                 let closer = '';
                 if (addCloser) {
@@ -318,7 +321,7 @@
         <label style="display:block; margin-bottom:10px;">Start Time: <input type="time" id="startTime" value="${startTime}" style="padding:5px; border:1px solid #ced4da; border-radius:4px;"></label>
         <label style="display:block; margin-bottom:10px;">Interval: <input type="number" id="intervalHours" value="${intervalHours}" min="0" style="width:60px; padding:5px; border:1px solid #ced4da; border-radius:4px;"> hours
         <input type="number" id="intervalMins" value="${intervalMins}" min="0" max="59" style="width:60px; padding:5px; border:1px solid #ced4da; border-radius:4px;"> mins</label>
-        <label style="display:block; margin-bottom:10px;">Emojis per Message:
+        <label style="display:block; margin-bottom:10px;">Emojis per Message: 
             <select id="maxEmojis" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
                 <option value="0" ${maxEmojis === 0 ? 'selected' : ''}>0</option>
                 <option value="1" ${maxEmojis === 1 ? 'selected' : ''}>1</option>
@@ -335,7 +338,7 @@
         <div id="slotsTable" style="margin-top:15px;"></div>
         <button id="scheduleAllBtn" style="padding:6px 12px; background:#ffc107; color:#212529; border:none; border-radius:4px; cursor:pointer; margin-top:10px;">Schedule All</button>
         <div id="logArea" style="margin-top:15px; border-top:1px solid #dee2e6; padding-top:10px; max-height:250px; overflow-y:auto; background:#e9ecef; padding:10px; border-radius:4px;"></div>
-        <button id="closePanel" style="position:absolute; top:5px; right:5px; background:none; border:none; font-size:16px; cursor:pointer; color:#6c757d;">✕</button>
+        <button id="closePanel" style="position:absolute; top:5px; right:5px; background:none; border:none; font-size:16px; cursor:pointer; color:#6c757d;">X</button>
     `;
     document.body.appendChild(panel);
 
@@ -372,13 +375,32 @@
     function updateMsgList() {
         const listDiv = document.getElementById('msgList');
         listDiv.innerHTML = '<h4 style="margin:0 0 5px; color:#495057;">Messages:</h4><ul style="list-style:none; padding:0;">' +
-            messages.map((msg, i) => `<li style="margin-bottom:5px; background:#fff; padding:8px; border:1px solid #dee2e6; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"><span>${msg}</span><button data-idx="${i}" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Remove</button></li>`).join('') + '</ul>';
-        listDiv.querySelectorAll('button').forEach(btn => {
+            messages.map((msg, i) => `<li style="margin-bottom:5px; background:#fff; padding:8px; border:1px solid #dee2e6; border-radius:4px; display:flex; justify-content:space-between; align-items:center;"><span>${msg}</span><button data-idx="${i}" class="editBtn" style="background:#ffc107; color:#212529; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:5px;">Edit</button><button data-idx="${i}" class="removeBtn" style="background:#dc3545; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Remove</button></li>`).join('') + '</ul>';
+        listDiv.querySelectorAll('.removeBtn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const idx = parseInt(btn.dataset.idx);
                 messages.splice(idx, 1);
                 saveSettings();
                 updateMsgList();
+            });
+        });
+        listDiv.querySelectorAll('.editBtn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const idx = parseInt(btn.dataset.idx);
+                const li = btn.parentNode;
+                const msg = messages[idx];
+                li.innerHTML = `<textarea style="flex:1; padding:5px; border:1px solid #ced4da; border-radius:4px; margin-right:5px;">${msg}</textarea><button class="saveBtn" style="background:#28a745; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; margin-right:5px;">Save</button><button class="cancelBtn" style="background:#6c757d; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Cancel</button>`;
+                li.querySelector('.saveBtn').addEventListener('click', () => {
+                    const newMsg = li.querySelector('textarea').value.trim();
+                    if (newMsg) {
+                        messages[idx] = newMsg;
+                        saveSettings();
+                    }
+                    updateMsgList();
+                });
+                li.querySelector('.cancelBtn').addEventListener('click', () => {
+                    updateMsgList();
+                });
             });
         });
     }

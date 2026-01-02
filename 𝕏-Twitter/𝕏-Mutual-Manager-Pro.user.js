@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro
 // @namespace    http://tampermonkey.net/
-// @version      1.6
+// @version      1.0.1
 // @author       YanaHeat
 // @match        https://x.com/*follow*
 // @grant        none
@@ -19,8 +19,8 @@
 
   let scPauseCount = parseInt(localStorage.getItem('um_sc_pause_count')) || 200;
   let scPauseSeconds = parseInt(localStorage.getItem('um_sc_pause_seconds')) || 30;
-  let fbMaxPerPeriod = parseInt(localStorage.getItem('um_fb_max_per_period')) || 14;
-  let fbScanMax = parseInt(localStorage.getItem('um_fb_scan_max')) || 100;
+  const fbMaxPerPeriod = 14;
+  let fbCooldownMinutes = parseInt(localStorage.getItem('um_fb_cooldown_minutes')) || 15;
 
   const MIN_DELAY = 200;
   const MAX_DELAY = 600;
@@ -29,10 +29,13 @@
   const STUCK_THRESHOLD = 60;
 
   const UF_MAX_PER_PERIOD = 150;
-  const ACTION_CD = 15 * 60 * 1000;
+  let ACTION_CD = fbCooldownMinutes * 60 * 1000;
   const SC_MAX_UNFOLLOW = 30000;
 
   const FB_SCAN_MIN = 50;
+  const SC_INIT = 100;
+  const SC_POST = 50;
+  let fbScanMax = parseInt(localStorage.getItem('um_fb_scan_max')) || SC_INIT;
 
   const path = window.location.pathname;
   const parts = path.split('/').filter(p => p);
@@ -200,8 +203,8 @@
     Object.keys(localStorage)
       .filter(key => key.startsWith(prefix) && key !== 'um_fb_followUnv')
       .forEach(key => localStorage.removeItem(key));
-    localStorage.removeItem('um_fb_firstPass');
     localStorage.removeItem('um_fb_firstScan');
+    localStorage.removeItem('um_fb_scan_max');
     resetUI();
     location.reload();
   };
@@ -425,6 +428,23 @@
   pauseSecondsDiv.appendChild(pauseSecondsInput);
   advancedContent.appendChild(pauseSecondsDiv);
 
+  const cooldownDiv = document.createElement('div');
+  cooldownDiv.style.cssText = 'display:flex;align-items:center;gap:5px;';
+  const cooldownLabel = document.createElement('label');
+  cooldownLabel.textContent = 'Cooldown Minutes:';
+  const cooldownInput = document.createElement('input');
+  cooldownInput.type = 'number';
+  cooldownInput.value = fbCooldownMinutes;
+  cooldownInput.min = '1';
+  cooldownInput.onchange = () => {
+    fbCooldownMinutes = parseInt(cooldownInput.value) || 15;
+    localStorage.setItem('um_fb_cooldown_minutes', fbCooldownMinutes);
+    ACTION_CD = fbCooldownMinutes * 60 * 1000;
+  };
+  cooldownDiv.appendChild(cooldownLabel);
+  cooldownDiv.appendChild(cooldownInput);
+  advancedContent.appendChild(cooldownDiv);
+
   let followUnvCheckbox;
   if (mode !== 'unfollow') {
     const followUnvDiv = document.createElement('div');
@@ -450,22 +470,6 @@
     followUnvDiv.appendChild(followUnvLabel);
     advancedContent.appendChild(followUnvDiv);
 
-    const fbMaxDiv = document.createElement('div');
-    fbMaxDiv.style.cssText = 'display:flex;align-items:center;gap:5px;';
-    const fbMaxLabel = document.createElement('label');
-    fbMaxLabel.textContent = 'Max FB/period:';
-    const fbMaxInput = document.createElement('input');
-    fbMaxInput.type = 'number';
-    fbMaxInput.value = fbMaxPerPeriod;
-    fbMaxInput.min = '1';
-    fbMaxInput.onchange = () => {
-      fbMaxPerPeriod = parseInt(fbMaxInput.value) || 14;
-      localStorage.setItem('um_fb_max_per_period', fbMaxPerPeriod);
-    };
-    fbMaxDiv.appendChild(fbMaxLabel);
-    fbMaxDiv.appendChild(fbMaxInput);
-    advancedContent.appendChild(fbMaxDiv);
-
     const fbScanMaxDiv = document.createElement('div');
     fbScanMaxDiv.style.cssText = 'display:flex;align-items:center;gap:5px;';
     const fbScanMaxLabel = document.createElement('label');
@@ -475,7 +479,7 @@
     fbScanMaxInput.value = fbScanMax;
     fbScanMaxInput.min = '1';
     fbScanMaxInput.onchange = () => {
-      fbScanMax = parseInt(fbScanMaxInput.value) || 100;
+      fbScanMax = parseInt(fbScanMaxInput.value) || SC_INIT;
       localStorage.setItem('um_fb_scan_max', fbScanMax);
     };
     fbScanMaxDiv.appendChild(fbScanMaxLabel);
@@ -723,7 +727,7 @@
 
   } else {
     const followUnvEnabled = getFollowUnv();
-    modeLine.textContent = `Mode: Follow Back (${followUnvEnabled ? 'All' : (isVerified ? 'Verified' : 'Verified') } Followers)`;
+    modeLine.textContent = `Mode: Follow Back (${followUnvEnabled ? 'All' : (isVerified ? 'Verified' : 'Verified')} Followers)`;
 
     actionLine.innerHTML = `
       FB: <span id="fb-count-val">0/${fbMaxPerPeriod}</span>
@@ -743,11 +747,6 @@
     let fbCooldownEnd = parseInt(localStorage.getItem('um_fb_cooldownEnd') || '0');
     let fbCooldownRemaining = 0;
     let fbCooldownInt = null;
-
-    if (localStorage.getItem('um_fb_firstPass') === null) {
-      localStorage.setItem('um_fb_firstPass', 'true');
-    }
-    let firstPass = localStorage.getItem('um_fb_firstPass') === 'true';
 
     if (localStorage.getItem('um_fb_firstScan') === null) {
       localStorage.setItem('um_fb_firstScan', 'true');
@@ -900,19 +899,11 @@
         return;
       }
 
-      if (firstPass) {
-        localStorage.setItem('um_fb_firstPass', 'false');
-        firstPass = false;
-        fbMaxPerPeriod = 50;
-        localStorage.setItem('um_fb_max_per_period', 50);
-        console.log('First pass complete: Forced FB max to 50');
-      }
-
       if (firstScan && scanTotal >= fbScanMax) {
         localStorage.setItem('um_fb_firstScan', 'false');
         firstScan = false;
-        fbScanMax = 50;
-        localStorage.setItem('um_fb_scan_max', 50);
+        fbScanMax = SC_POST;
+        localStorage.setItem('um_fb_scan_max', SC_POST);
         console.log('First scan complete: Set scan max to 50 for next times');
       }
 

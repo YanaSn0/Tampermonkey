@@ -15,7 +15,8 @@
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.
 - 1.2 fixed: No more duplicate messages.
 - 1.3 added: Edit button to queue'd messages.
-- 1.4 added: per account emoji and closer
+- 1.4 added: per account emoji and closer.
+- 1.5 added: timezone offset to account configs.
 <img width="1600" height="900" alt="YanaSn0w1_firefox_kjliR0nIk0_2" src="https://github.com/user-attachments/assets/a20df497-1d2b-4308-8c64-f49e8a61f0e3" />
 
 

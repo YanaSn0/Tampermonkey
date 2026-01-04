@@ -36,7 +36,7 @@
 
     const accountConfigs = {
         'YanaHeat': {
-            closers: ["everyone", "Builders", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend"],
+            closers: ["Love", "everyone", "Builders", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend"],
             morningEmojis: ["💕", "❤", "🖌️", "🦁", "🙏"],
             afternoonEmojis: ["🔥", "🚀", "🪭", "💰", "💬"],
             eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "👽", "🥷", "🍆", "🫟", "💸", "💵"],

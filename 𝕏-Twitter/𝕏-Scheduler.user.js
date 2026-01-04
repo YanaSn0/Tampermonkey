@@ -36,38 +36,38 @@
 
     const accountConfigs = {
         'YanaHeat': {
-            closers: ["Love", "Legend", "Fam"],
-            morningEmojis: ["💕", "❤"],
-            afternoonEmojis: ["🔥", "🚀"],
-            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎"],
+            closers: ["Love", "Legend", "Fam", "Frens"],
+            morningEmojis: ["💕", "❤", "🖌️"],
+            afternoonEmojis: ["🔥", "🚀", "🪭"],
+            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "👽", "🥷"],
             timezoneOffset: 0
         },
         'YanaSn0w1': {
-            closers: ["Babe", "Hun", "darling"],
-            morningEmojis: ["🌹", "😽"],
-            afternoonEmojis: ["⚡", "💖"],
-            eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍"],
+            closers: ["Babe", "Hun", "Darling", "Fren"],
+            morningEmojis: ["🌹", "😽", "🎨"],
+            afternoonEmojis: ["⚡", "🌈", "🌪️"],
+            eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🛡️", "🦁"],
             timezoneOffset: 0
         },
-        'YanaHeat00fan': {
-            closers: ["bro", "yo", "y'all"],
-            morningEmojis: ["🫶🏻", "🍑"],
-            afternoonEmojis: ["🌻", "💦"],
-            eveningNightEmojis: ["🌆", "✨", "🍸", "🎇"],
+        'YenaFan01': {
+            closers: ["bro", "yo", "y'all", "Peeps"],
+            morningEmojis: ["🫶🏻", "🍑", "🌮"],
+            afternoonEmojis: ["🌻", "💦", "🐪"],
+            eveningNightEmojis: ["🌆", "✨", "🍸", "🎇", "🌊", "🌜"],
             timezoneOffset: +2
         },
-        'YanaHeat01fan': {
-            closers: ["everyone", "champs", "mates"],
-            morningEmojis: ["⚔️", "😊"],
-            afternoonEmojis: ["🤔", "🎉"],
-            eveningNightEmojis: ["💜", "🙏", "🏆", "🫡"],
+        'YanaFan02': {
+            closers: ["everyone", "champs", "mates", "Builders"],
+            morningEmojis: ["⚔️", "😊", "🌐"],
+            afternoonEmojis: ["🤔", "🎉", "💬"],
+            eveningNightEmojis: ["💜", "🙏", "🏆", "🫡", "⏳", "🌒"],
             timezoneOffset: 0
         },
-        'YanaHeat02fan': {
-            closers: ["friends", "champ", "mate"],
-            morningEmojis: ["☀️", "🌱"],
-            afternoonEmojis: ["💐", "🙏"],
-            eveningNightEmojis: ["❤️‍🔥", "🌪️", "🌊", "☄️"],
+        'YanaFan03': {
+            closers: ["friends", "champ", "mate", "Buddies", "Legends"],
+            morningEmojis: ["🌅", "🌞", "😘"],
+            afternoonEmojis: ["😍", "❤️", "🌅"],
+            eveningNightEmojis: ["🌆", "🌉", "🌙", "❣️", "🌃", "✨"],
             timezoneOffset: -5
         }
         // Add more accounts here as needed:

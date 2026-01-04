@@ -40,14 +40,35 @@
             morningEmojis: ["💕", "❤"],
             afternoonEmojis: ["🔥", "🚀"],
             eveningNightEmojis: ["🐐", "🕔", "🌙", "💎"],
-            timezoneOffset: 0  // Offset in hours from default (local) time; negative to subtract hours, positive to add
+            timezoneOffset: 0
         },
         'YanaSn0w1': {
             closers: ["Babe", "Hun", "darling"],
             morningEmojis: ["🌹", "😽"],
             afternoonEmojis: ["⚡", "💖"],
             eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍"],
-            timezoneOffset: -1
+            timezoneOffset: 0
+        },
+        'YanaHeat00fan': {
+            closers: ["bro", "yo", "y'all"],
+            morningEmojis: ["🫶🏻", "🍑"],
+            afternoonEmojis: ["🌻", "💦"],
+            eveningNightEmojis: ["🌆", "✨", "🍸", "🎇"],
+            timezoneOffset: +2
+        },
+        'YanaHeat01fan': {
+            closers: ["everyone", "champs", "mates"],
+            morningEmojis: ["⚔️", "😊"],
+            afternoonEmojis: ["🤔", "🎉"],
+            eveningNightEmojis: ["💜", "🙏", "🏆", "🫡"],
+            timezoneOffset: 0
+        },
+        'YanaHeat02fan': {
+            closers: ["friends", "champ", "mate"],
+            morningEmojis: ["☀️", "🌱"],
+            afternoonEmojis: ["💐", "🙏"],
+            eveningNightEmojis: ["❤️‍🔥", "🌪️", "🌊", "☄️"],
+            timezoneOffset: -5
         }
         // Add more accounts here as needed:
         // 'SomeOtherAccount': { closers: [...], morningEmojis: [...], afternoonEmojis: [...], eveningNightEmojis: [...], timezoneOffset: -3 }
@@ -152,17 +173,20 @@
         let start = new Date(`${startDateStr}T${startTimeStr}:00`);
         if (isNaN(start.getTime())) return [];
 
+        // Apply timezone offset to the start time
+        start.setTime(start.getTime() + timezoneOffset * 60 * 60 * 1000);
+
         const now = new Date();
-        const bufferMs = 5 * 60 * 1000;
+        const bufferMs = 10 * 60 * 1000; // 10 minutes buffer
+        // If the adjusted start is in the past, bump the entire schedule by 24 hours
         if (start.getTime() < now.getTime() + bufferMs) {
-            start.setDate(start.getDate() + 1);
+            start.setTime(start.getTime() + 24 * 60 * 60 * 1000);
         }
 
         const intervalMs = (intervalHours * 60 + intervalMins) * 60 * 1000;
         const times = [];
         for (let i = 0; i < numPosts; i++) {
             const t = new Date(start.getTime() + i * intervalMs);
-            t.setTime(t.getTime() + timezoneOffset * 60 * 60 * 1000);  // Adjust by timezone offset in hours
             times.push(t);
         }
         return times;
@@ -305,11 +329,6 @@
     }
 
     let startDate = GM_getValue(storagePrefix + 'startDate', defaults.startDate);
-    const today = new Date().toISOString().split('T')[0];
-    if (startDate < today) {
-        startDate = today;
-        GM_setValue(storagePrefix + 'startDate', startDate);
-    }
     let startTime = GM_getValue(storagePrefix + 'startTime', defaults.startTime);
     let intervalHours = GM_getValue(storagePrefix + 'intervalHours', defaults.intervalHours);
     let intervalMins = GM_getValue(storagePrefix + 'intervalMins', defaults.intervalMins);

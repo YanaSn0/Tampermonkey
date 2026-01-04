@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.4
+// @version      1.5
 // @description  UI for scheduling X posts with per-account emoji configs.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -39,16 +39,18 @@
             closers: ["Love", "Legend", "Fam"],
             morningEmojis: ["💕", "❤"],
             afternoonEmojis: ["🔥", "🚀"],
-            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎"]
+            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎"],
+            timezoneOffset: 0  // Offset in hours from default (local) time; negative to subtract hours, positive to add
         },
         'YanaSn0w1': {
-            closers: ["Babe", "Hun", "mate"],
+            closers: ["Babe", "Hun", "darling"],
             morningEmojis: ["🌹", "😽"],
             afternoonEmojis: ["⚡", "💖"],
-            eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍"]
+            eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍"],
+            timezoneOffset: -1
         }
         // Add more accounts here as needed:
-        // 'SomeOtherAccount': { closers: [...], morningEmojis: [...], afternoonEmojis: [...], eveningNightEmojis: [...] }
+        // 'SomeOtherAccount': { closers: [...], morningEmojis: [...], afternoonEmojis: [...], eveningNightEmojis: [...], timezoneOffset: -3 }
     };
 
     function getAccountConfig(username) {
@@ -86,6 +88,7 @@
     const morningEmojis = resolvedConfig.morningEmojis || defaults.morningEmojis;
     const afternoonEmojis = resolvedConfig.afternoonEmojis || defaults.afternoonEmojis;
     const eveningNightEmojis = resolvedConfig.eveningNightEmojis || defaults.eveningNightEmojis;
+    const timezoneOffset = resolvedConfig.timezoneOffset || 0;
 
     function waitForElement(selector, timeout = 5000) {
         return new Promise((resolve, reject) => {
@@ -159,6 +162,7 @@
         const times = [];
         for (let i = 0; i < numPosts; i++) {
             const t = new Date(start.getTime() + i * intervalMs);
+            t.setTime(t.getTime() + timezoneOffset * 60 * 60 * 1000);  // Adjust by timezone offset in hours
             times.push(t);
         }
         return times;

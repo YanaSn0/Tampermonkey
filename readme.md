@@ -15,4 +15,5 @@
 - 1.4 added: per account emoji and closer.
 - 1.5 added: timezone offset to account configs.
 <img width="1600" height="900" alt="YanaSn0w1_firefox_kjliR0nIk0_2" src="https://github.com/user-attachments/assets/a20df497-1d2b-4308-8c64-f49e8a61f0e3" />
+
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅

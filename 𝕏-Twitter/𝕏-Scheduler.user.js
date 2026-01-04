@@ -36,10 +36,10 @@
 
     const accountConfigs = {
         'YanaHeat': {
-            closers: ["Love", "Legend", "Fam", "Frens"],
-            morningEmojis: ["💕", "❤", "🖌️"],
-            afternoonEmojis: ["🔥", "🚀", "🪭"],
-            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "👽", "🥷"],
+            closers: ["everyone", "Builders", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend"],
+            morningEmojis: ["💕", "❤", "🖌️", "🦁", "🙏"],
+            afternoonEmojis: ["🔥", "🚀", "🪭", "💰", "💬"],
+            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "👽", "🥷", "🍆", "🫟", "💸", "💵"],
             timezoneOffset: 0
         },
         'YanaSn0w1': {

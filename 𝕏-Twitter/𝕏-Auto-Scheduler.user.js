@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.6
-// @description  UI for scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
+// @version      1.7
+// @description  Auto scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        GM_getValue

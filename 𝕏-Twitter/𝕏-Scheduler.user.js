@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         𝕏-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.5
-// @description  UI for scheduling X posts with per-account emoji configs.
+// @version      1.6
+// @description  UI for scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty.
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        GM_getValue
@@ -39,7 +39,7 @@
             closers: ["Love", "everyone", "Builders", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend"],
             morningEmojis: ["💕", "❤", "🖌️", "🦁", "🙏"],
             afternoonEmojis: ["🔥", "🚀", "🪭", "💰", "💬"],
-            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "👽", "🥷", "🍆", "🫟", "💸", "💵"],
+            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵"],
             timezoneOffset: 0
         },
         'YanaSn0w1': {
@@ -49,7 +49,7 @@
             eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🛡️", "🦁"],
             timezoneOffset: 0
         },
-        'YenaFan01': {
+        'YanaFan01': {
             closers: ["bro", "yo", "y'all", "Peeps"],
             morningEmojis: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojis: ["🌻", "💦", "🐪"],
@@ -286,6 +286,102 @@
         }
     }
 
+    async function openScheduledView() {
+        try {
+            await closeModal();
+
+            // Open composer
+            const newPostButton = await waitForElement('[data-testid="SideNav_NewTweet_Button"], [data-testid="SideNav_NewPost_Button"]');
+            newPostButton.click();
+            await wait(1000);
+
+            // Click schedule option
+            const scheduleOption = await waitForElement('[data-testid="scheduleOption"]');
+            scheduleOption.click();
+            await wait(1000);
+
+            // Find and click "Scheduled posts" button by text content
+            let schedBtn;
+            const buttons = document.querySelectorAll('button');
+            for (let btn of buttons) {
+                if (btn.textContent.includes('Scheduled posts')) {
+                    schedBtn = btn;
+                    break;
+                }
+            }
+            if (!schedBtn) {
+                console.log('Could not find "Scheduled posts" button.');
+                await closeModal();
+                return;
+            }
+            schedBtn.click();
+            await wait(1000);
+
+            // Do not close, leave open
+        } catch (e) {
+            console.error('Error opening scheduled view:', e);
+            await closeModal();
+        }
+    }
+
+    async function getScheduledCount(logArea, dontClose = false) {
+        try {
+            await closeModal();
+
+            // Open composer
+            const newPostButton = await waitForElement('[data-testid="SideNav_NewTweet_Button"], [data-testid="SideNav_NewPost_Button"]');
+            newPostButton.click();
+            await wait(1000);
+
+            // Click schedule option
+            const scheduleOption = await waitForElement('[data-testid="scheduleOption"]');
+            scheduleOption.click();
+            await wait(1000);
+
+            // Find and click "Scheduled posts" button by text content
+            let schedBtn;
+            const buttons = document.querySelectorAll('button');
+            for (let btn of buttons) {
+                if (btn.textContent.includes('Scheduled posts')) {
+                    schedBtn = btn;
+                    break;
+                }
+            }
+            if (!schedBtn) {
+                logArea.innerHTML += 'Could not find "Scheduled posts" button.<br>';
+                await closeModal();
+                return 0;
+            }
+            schedBtn.click();
+            await wait(1000);
+
+            // Check for empty state
+            const emptyState = document.querySelector('[data-testid="emptyState"]');
+            let count = 0;
+            if (emptyState) {
+                logArea.innerHTML += 'Scheduled queue is empty. To view manually: Open composer > Click schedule icon > Click "Scheduled posts" link.<br>';
+            } else {
+                // Count posts (assuming buttons for each unsentTweet)
+                const posts = document.querySelectorAll('[data-testid="unsentTweet"]');
+                count = posts.length;
+                logArea.innerHTML += `Scheduled posts count: ${count}<br>`;
+                if (count >= 100) {
+                    logArea.innerHTML += '<span style="color:red;">Warning: Queue may be approaching practical limits (100+ reported in some tools).</span><br>';
+                }
+            }
+
+            if (!dontClose) {
+                await closeModal();
+            }
+            return count;
+        } catch (e) {
+            console.error('Error checking scheduled count:', e);
+            await closeModal();
+            logArea.innerHTML += 'Error checking queue.<br>';
+            return 0;
+        }
+    }
+
     function generateRandomMessages() {
         const groups = [
             {greetings: defaults.gmGreetings, emojiPool: morningEmojis, count: 2},
@@ -393,6 +489,7 @@
         <div id="msgList" style="margin-top:15px;"></div>
         <button id="previewSlotsBtn" style="padding:6px 12px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer; margin-top:10px;">Preview Schedules</button>
         <div id="slotsTable" style="margin-top:15px;"></div>
+        <button id="checkQueueBtn" style="padding:6px 12px; background:#6f42c1; color:white; border:none; border-radius:4px; cursor:pointer; margin-top:10px;">Check Scheduled Queue</button>
         <button id="scheduleAllBtn" style="padding:6px 12px; background:#ffc107; color:#212529; border:none; border-radius:4px; cursor:pointer; margin-top:10px;">Schedule All</button>
         <div id="logArea" style="margin-top:15px; border-top:1px solid #dee2e6; padding-top:10px; max-height:250px; overflow-y:auto; background:#e9ecef; padding:10px; border-radius:4px;"></div>
         <button id="closePanel" style="position:absolute; top:5px; right:5px; background:none; border:none; font-size:16px; cursor:pointer; color:#6c757d;">✕</button>
@@ -478,7 +575,7 @@
     });
 
     document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
-        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages'].forEach(key => {
+        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages', 'lastQueuedDate'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
@@ -519,6 +616,13 @@
             times.map((t, i) => `<tr><td style="border:1px solid #dee2e6; padding:8px;">${t.toLocaleString()}</td><td style="border:1px solid #dee2e6; padding:8px;">${messages[i]}</td></tr>`).join('') + '</table>';
     });
 
+    document.getElementById('checkQueueBtn').addEventListener('click', async () => {
+        const logArea = document.getElementById('logArea');
+        logArea.innerHTML += 'Checking scheduled queue...<br>';
+        await getScheduledCount(logArea);
+        logArea.scrollTop = logArea.scrollHeight;
+    });
+
     document.getElementById('scheduleAllBtn').addEventListener('click', async () => {
         const logArea = document.getElementById('logArea');
         logArea.innerHTML = 'Scheduling...<br>';
@@ -531,11 +635,64 @@
             logArea.innerHTML += success ? '<span style="color:green;">Success</span><br>' : '<span style="color:red;">Failed</span><br>';
             await wait(2000);
         }
+        await openScheduledView();
         logArea.scrollTop = logArea.scrollHeight;
     });
 
     document.getElementById('closePanel').addEventListener('click', () => {
         panel.style.display = 'none';
     });
+
+    // Watch for dynamic date change (e.g., midnight cross)
+    let currentDay = new Date().getDate();
+    setInterval(() => {
+        const nowDay = new Date().getDate();
+        if (nowDay !== currentDay) {
+            currentDay = nowDay;
+            startDate = new Date().toISOString().split('T')[0];
+            document.getElementById('startDate').value = startDate;
+            saveSettings();
+            const logArea = document.getElementById('logArea');
+            logArea.innerHTML += 'Date updated dynamically to today.<br>';
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+    }, 60000); // Check every minute
+
+    // Auto queue logic
+    async function autoQueueIfNeeded() {
+        const today = new Date().toISOString().split('T')[0];
+        let lastQueuedDate = GM_getValue(storagePrefix + 'lastQueuedDate', '');
+        if (today === lastQueuedDate) {
+            return;
+        }
+
+        const logArea = document.getElementById('logArea');
+        logArea.innerHTML += 'Auto-checking for daily queue...<br>';
+        const count = await getScheduledCount(logArea);
+        if (count === 0) {
+            logArea.innerHTML += 'Queue is empty, auto-generating and scheduling 8 posts...<br>';
+            messages = generateRandomMessages();
+            saveSettings();
+            updateMsgList();
+
+            const times = computeScheduleTimes(today, '23:59', intervalHours, intervalMins, messages.length);
+            for (let i = 0; i < messages.length; i++) {
+                const targetTime = times[i];
+                const text = messages[i];
+                logArea.innerHTML += `Auto-scheduling at ${targetTime.toLocaleString()}: "${text}"<br>`;
+                const success = await schedulePost(targetTime, text);
+                logArea.innerHTML += success ? '<span style="color:green;">Success</span><br>' : '<span style="color:red;">Failed</span><br>';
+                await wait(2000);
+            }
+            await openScheduledView(); // Leave on scheduled page for manual pic addition
+            GM_setValue(storagePrefix + 'lastQueuedDate', today);
+        } else {
+            logArea.innerHTML += 'Queue not empty, skipping auto-scheduling.<br>';
+        }
+        logArea.scrollTop = logArea.scrollHeight;
+    }
+
+    // Run auto queue
+    await autoQueueIfNeeded();
 
 })();

@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.7
-// @description  Auto scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
+// @version      1.8
+// @description  UI for scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        GM_getValue
@@ -49,29 +49,28 @@
             eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🛡️", "🦁"],
             timezoneOffset: 0
         },
-        'fan0': {
+        'YenaFan01': {
             closers: ["bro", "yo", "y'all", "Peeps"],
             morningEmojis: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojis: ["🌻", "💦", "🐪"],
             eveningNightEmojis: ["🌆", "✨", "🍸", "🎇", "🌊", "🌜"],
             timezoneOffset: +2
         },
-        'fan1': {
+        'YenaFan02': {
             closers: ["everyone", "champs", "mates", "Builders"],
             morningEmojis: ["⚔️", "😊", "🌐"],
             afternoonEmojis: ["🤔", "🎉", "💬"],
             eveningNightEmojis: ["💜", "🙏", "🏆", "🫡", "⏳", "🌒"],
             timezoneOffset: 0
         },
-        'fan2': {
+        'YenaFan03': {
             closers: ["friends", "champ", "mate", "Buddies", "Legends"],
             morningEmojis: ["🌅", "🌞", "😘"],
             afternoonEmojis: ["😍", "❤️", "🌅"],
             eveningNightEmojis: ["🌆", "🌉", "🌙", "❣️", "🌃", "✨"],
             timezoneOffset: -5
         }
-        // Add more accounts here as needed:
-        // 'SomeOtherAccount': { closers: [...], morningEmojis: [...], afternoonEmojis: [...], eveningNightEmojis: [...], timezoneOffset: -3 }
+        // Add more accounts here as needed
     };
 
     function getAccountConfig(username) {
@@ -591,55 +590,86 @@
     }
     updateMsgList();
 
-    document.getElementById('addMsgBtn').addEventListener('click', () => {
-        const newMsg = document.getElementById('newMsg').value.trim();
-        if (newMsg) {
-            messages.push(newMsg);
-            saveSettings();
-            updateMsgList();
-            document.getElementById('newMsg').value = '';
-        }
-    });
+    const startDateInput = document.getElementById('startDate');
+    const startTimeInput = document.getElementById('startTime');
+    const intervalHoursInput = document.getElementById('intervalHours');
+    const intervalMinsInput = document.getElementById('intervalMins');
+    const maxEmojisSelect = document.getElementById('maxEmojis');
+    const newMsgInput = document.getElementById('newMsg');
+    const addMsgBtn = document.getElementById('addMsgBtn');
+    const generateRandomBtn = document.getElementById('generateRandomBtn');
+    const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
+    const previewSlotsBtn = document.getElementById('previewSlotsBtn');
+    const checkQueueBtn = document.getElementById('checkQueueBtn');
+    const scheduleAllBtn = document.getElementById('scheduleAllBtn');
+    const closePanelBtn = document.getElementById('closePanel');
+    const slotsTableDiv = document.getElementById('slotsTable');
+    const logArea = document.getElementById('logArea');
+    const statusArea = document.getElementById('statusArea');
+    const timerArea = document.getElementById('timerArea');
 
-    document.getElementById('generateRandomBtn').addEventListener('click', () => {
+    let isScheduling = false;
+    let isAutoQueueRunning = false;
+
+    generateRandomBtn.addEventListener('click', () => {
+        if (isScheduling || isAutoQueueRunning) {
+            logArea.innerHTML += 'Busy, cannot regenerate messages now.<br>';
+            logArea.scrollTop = logArea.scrollHeight;
+            return;
+        }
         messages = generateRandomMessages();
         saveSettings();
         updateMsgList();
     });
 
-    document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
+    resetDefaultsBtn.addEventListener('click', () => {
+        if (isScheduling || isAutoQueueRunning) {
+            logArea.innerHTML += 'Busy, cannot reset now.<br>';
+            logArea.scrollTop = logArea.scrollHeight;
+            return;
+        }
         ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages', 'nextAutoCheckTime'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
     });
 
-    document.getElementById('startDate').addEventListener('change', () => {
-        startDate = document.getElementById('startDate').value;
+    startDateInput.addEventListener('change', () => {
+        startDate = startDateInput.value;
         saveSettings();
     });
 
-    document.getElementById('startTime').addEventListener('change', () => {
-        startTime = document.getElementById('startTime').value;
+    startTimeInput.addEventListener('change', () => {
+        startTime = startTimeInput.value;
         saveSettings();
     });
 
-    document.getElementById('intervalHours').addEventListener('change', () => {
-        intervalHours = parseInt(document.getElementById('intervalHours').value, 10) || 0;
+    intervalHoursInput.addEventListener('change', () => {
+        intervalHours = parseInt(intervalHoursInput.value, 10) || 0;
         saveSettings();
     });
 
-    document.getElementById('intervalMins').addEventListener('change', () => {
-        intervalMins = parseInt(document.getElementById('intervalMins').value, 10) || 0;
+    intervalMinsInput.addEventListener('change', () => {
+        intervalMins = parseInt(intervalMinsInput.value, 10) || 0;
         if (intervalMins > 59) intervalMins = 59;
-        document.getElementById('intervalMins').value = intervalMins;
+        intervalMinsInput.value = intervalMins;
         saveSettings();
     });
 
-    document.getElementById('maxEmojis').addEventListener('change', () => {
-        const value = document.getElementById('maxEmojis').value;
+    maxEmojisSelect.addEventListener('change', () => {
+        const value = maxEmojisSelect.value;
         maxEmojis = value === 'random' ? 'random' : parseInt(value, 10) || 0;
         saveSettings();
+    });
+
+    addMsgBtn.addEventListener('click', () => {
+        const newMsg = newMsgInput.value.trim();
+        if (newMsg) {
+            messages.push(newMsg);
+            saveSettings();
+            updateMsgList();
+            newMsgInput.value = '';
+        }
     });
 
     document.getElementById('previewSlotsBtn').addEventListener('click', () => {
@@ -650,14 +680,23 @@
     });
 
     document.getElementById('checkQueueBtn').addEventListener('click', async () => {
-        const logArea = document.getElementById('logArea');
+        if (isScheduling || isAutoQueueRunning) {
+            logArea.innerHTML += 'Busy, cannot check scheduled queue now.<br>';
+            logArea.scrollTop = logArea.scrollHeight;
+            return;
+        }
         logArea.innerHTML += 'Checking scheduled queue...<br>';
         await getScheduledInfo(logArea);
         logArea.scrollTop = logArea.scrollHeight;
     });
 
     document.getElementById('scheduleAllBtn').addEventListener('click', async () => {
-        const logArea = document.getElementById('logArea');
+        if (isScheduling || isAutoQueueRunning) {
+            logArea.innerHTML += 'Already scheduling or auto-queue running.<br>';
+            logArea.scrollTop = logArea.scrollHeight;
+            return;
+        }
+        isScheduling = true;
         logArea.innerHTML = 'Scheduling...<br>';
         const times = computeScheduleTimes(startDate, startTime, intervalHours, intervalMins, messages.length);
         for (let i = 0; i < messages.length; i++) {
@@ -666,10 +705,11 @@
             logArea.innerHTML += `Scheduling at ${targetTime.toLocaleString()}: "${text}"<br>`;
             const success = await schedulePost(targetTime, text);
             logArea.innerHTML += success ? '<span style="color:green;">Success</span><br>' : '<span style="color:red;">Failed</span><br>';
+            logArea.scrollTop = logArea.scrollHeight;
             await wait(2000);
         }
-        await openScheduledView();
-        logArea.scrollTop = logArea.scrollHeight;
+        setTimeout(() => { openScheduledView(); }, 1000);
+        isScheduling = false;
     });
 
     document.getElementById('closePanel').addEventListener('click', () => {
@@ -696,6 +736,9 @@
         const now = Date.now();
         let nextAutoCheckTime = GM_getValue(storagePrefix + 'nextAutoCheckTime', now); // default to now if not set
         if (now < nextAutoCheckTime) return;
+        if (isScheduling || isAutoQueueRunning) return;
+
+        isAutoQueueRunning = true;
 
         const logArea = document.getElementById('logArea');
         const statusArea = document.getElementById('statusArea');
@@ -704,6 +747,7 @@
         if (count === 0) {
             const today = getLocalDateStr();
             logArea.innerHTML += 'Queue is empty, auto-generating and scheduling 8 posts...<br>';
+            logArea.scrollTop = logArea.scrollHeight;
             messages = generateRandomMessages();
             saveSettings();
             updateMsgList();
@@ -714,12 +758,14 @@
                 const targetTime = times[i];
                 const text = messages[i];
                 logArea.innerHTML += `Auto-scheduling at ${targetTime.toLocaleString()}: "${text}"<br>`;
+                logArea.scrollTop = logArea.scrollHeight;
                 const success = await schedulePost(targetTime, text);
                 logArea.innerHTML += success ? '<span style="color:green;">Success</span><br>' : '<span style="color:red;">Failed</span><br>';
+                logArea.scrollTop = logArea.scrollHeight;
                 if (success) successCount++;
                 await wait(2000);
             }
-            await openScheduledView(); // Leave on scheduled page for manual pic addition
+            setTimeout(() => { openScheduledView(); }, 1000); // Leave on scheduled page for manual pic addition
             const lastGNTime = times[times.length - 1].getTime() + 5 * 60 * 1000;
             GM_setValue(storagePrefix + 'nextAutoCheckTime', lastGNTime);
             statusArea.innerHTML = `Auto-scheduled ${successCount} posts. Next check: ${new Date(lastGNTime).toLocaleString()}`;
@@ -739,6 +785,7 @@
             }
         }
         logArea.scrollTop = logArea.scrollHeight;
+        isAutoQueueRunning = false;
     }
 
     function updateTimer() {
@@ -758,6 +805,7 @@
 
     // Periodic check to trigger autoQueueIfNeeded
     setInterval(async () => {
+        if (isScheduling || isAutoQueueRunning) return;
         const now = Date.now();
         const next = GM_getValue(storagePrefix + 'nextAutoCheckTime', now);
         if (now >= next) {

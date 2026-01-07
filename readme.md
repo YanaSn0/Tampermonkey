@@ -5,7 +5,7 @@
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.
 <img width="1600" height="900" alt="YanaSn0w1_firefox_VeGbJLdvBp_2" src="https://github.com/user-attachments/assets/d2aeb3eb-22a4-4a33-b63b-a19cabcf6307" />
 
-# [𝕏-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Scheduler.user.js "𝕏-Scheduler")
+# [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler")
 
 ## One click, 8 posts scheduled.
 

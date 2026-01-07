@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         𝕏-Scheduler
+// @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
 // @version      1.6
-// @description  UI for scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty.
+// @description  UI for scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        GM_getValue
@@ -49,21 +49,21 @@
             eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🛡️", "🦁"],
             timezoneOffset: 0
         },
-        'YanaFan01': {
+        'fan0': {
             closers: ["bro", "yo", "y'all", "Peeps"],
             morningEmojis: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojis: ["🌻", "💦", "🐪"],
             eveningNightEmojis: ["🌆", "✨", "🍸", "🎇", "🌊", "🌜"],
             timezoneOffset: +2
         },
-        'YanaFan02': {
+        'fan1': {
             closers: ["everyone", "champs", "mates", "Builders"],
             morningEmojis: ["⚔️", "😊", "🌐"],
             afternoonEmojis: ["🤔", "🎉", "💬"],
             eveningNightEmojis: ["💜", "🙏", "🏆", "🫡", "⏳", "🌒"],
             timezoneOffset: 0
         },
-        'YanaFan03': {
+        'fan2': {
             closers: ["friends", "champ", "mate", "Buddies", "Legends"],
             morningEmojis: ["🌅", "🌞", "😘"],
             afternoonEmojis: ["😍", "❤️", "🌅"],
@@ -166,6 +166,14 @@
         } catch (e) {
             console.error('Error closing modal:', e);
         }
+    }
+
+    function getLocalDateStr() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     }
 
     function computeScheduleTimes(startDateStr, startTimeStr, intervalHours, intervalMins, numPosts) {
@@ -324,7 +332,7 @@
         }
     }
 
-    async function getScheduledCount(logArea, dontClose = false) {
+    async function getScheduledInfo(logArea, dontClose = false) {
         try {
             await closeModal();
 
@@ -350,7 +358,7 @@
             if (!schedBtn) {
                 logArea.innerHTML += 'Could not find "Scheduled posts" button.<br>';
                 await closeModal();
-                return 0;
+                return {count: 0, latestTime: null};
             }
             schedBtn.click();
             await wait(1000);
@@ -358,27 +366,50 @@
             // Check for empty state
             const emptyState = document.querySelector('[data-testid="emptyState"]');
             let count = 0;
+            let latestTime = null;
             if (emptyState) {
-                logArea.innerHTML += 'Scheduled queue is empty. To view manually: Open composer > Click schedule icon > Click "Scheduled posts" link.<br>';
+                logArea.innerHTML += 'Scheduled queue is empty.<br>';
             } else {
-                // Count posts (assuming buttons for each unsentTweet)
+                // Count posts and find latest time
                 const posts = document.querySelectorAll('[data-testid="unsentTweet"]');
                 count = posts.length;
                 logArea.innerHTML += `Scheduled posts count: ${count}<br>`;
                 if (count >= 100) {
                     logArea.innerHTML += '<span style="color:red;">Warning: Queue may be approaching practical limits (100+ reported in some tools).</span><br>';
                 }
+                let maxTime = 0;
+                posts.forEach(post => {
+                    const timeEls = post.querySelectorAll('span');
+                    for (let el of timeEls) {
+                        if (el.textContent.includes('Will send on')) {
+                            const match = el.textContent.match(/ \w{3}, (\w{3})\.? (\d+), (\d{4}) at (\d+):(\d+) (\wM)/);
+                            if (match) {
+                                const [_, month, day, year, hour, min, ampm] = match;
+                                const dateStr = `${month} ${day}, ${year} ${hour}:${min} ${ampm}`;
+                                const postTime = new Date(dateStr).getTime();
+                                if (!isNaN(postTime) && postTime > maxTime) maxTime = postTime;
+                            }
+                            break;
+                        }
+                    }
+                });
+                if (maxTime > 0) {
+                    latestTime = maxTime;
+                    logArea.innerHTML += `Latest scheduled post at: ${new Date(latestTime).toLocaleString()}<br>`;
+                } else {
+                    logArea.innerHTML += 'Could not parse scheduled times.<br>';
+                }
             }
 
             if (!dontClose) {
                 await closeModal();
             }
-            return count;
+            return {count, latestTime};
         } catch (e) {
-            console.error('Error checking scheduled count:', e);
+            console.error('Error checking scheduled info:', e);
             await closeModal();
             logArea.innerHTML += 'Error checking queue.<br>';
-            return 0;
+            return {count: 0, latestTime: null};
         }
     }
 
@@ -464,6 +495,8 @@
     panel.style.fontFamily = 'Arial, sans-serif';
     panel.innerHTML = `
         <h3 style="margin-top:0; color:#212529;">X Post Scheduler ${currentUsername ? '(' + currentUsername + ')' : ''}</h3>
+        <div id="timerArea" style="margin-bottom:15px; color:#007bff; font-weight:bold;"></div>
+        <div id="statusArea" style="margin-bottom:15px; padding:10px; background:#e9ecef; border-radius:4px; font-weight:bold;"></div>
         <label style="display:block; margin-bottom:10px;">Start Date:
             <input type="date" id="startDate" value="${startDate}" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
         </label>
@@ -575,7 +608,7 @@
     });
 
     document.getElementById('resetDefaultsBtn').addEventListener('click', () => {
-        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages', 'lastQueuedDate'].forEach(key => {
+        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages', 'nextAutoCheckTime'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
@@ -619,7 +652,7 @@
     document.getElementById('checkQueueBtn').addEventListener('click', async () => {
         const logArea = document.getElementById('logArea');
         logArea.innerHTML += 'Checking scheduled queue...<br>';
-        await getScheduledCount(logArea);
+        await getScheduledInfo(logArea);
         logArea.scrollTop = logArea.scrollHeight;
     });
 
@@ -649,7 +682,7 @@
         const nowDay = new Date().getDate();
         if (nowDay !== currentDay) {
             currentDay = nowDay;
-            startDate = new Date().toISOString().split('T')[0];
+            startDate = getLocalDateStr();
             document.getElementById('startDate').value = startDate;
             saveSettings();
             const logArea = document.getElementById('logArea');
@@ -660,39 +693,81 @@
 
     // Auto queue logic
     async function autoQueueIfNeeded() {
-        const today = new Date().toISOString().split('T')[0];
-        let lastQueuedDate = GM_getValue(storagePrefix + 'lastQueuedDate', '');
-        if (today === lastQueuedDate) {
-            return;
-        }
+        const now = Date.now();
+        let nextAutoCheckTime = GM_getValue(storagePrefix + 'nextAutoCheckTime', now); // default to now if not set
+        if (now < nextAutoCheckTime) return;
 
         const logArea = document.getElementById('logArea');
-        logArea.innerHTML += 'Auto-checking for daily queue...<br>';
-        const count = await getScheduledCount(logArea);
+        const statusArea = document.getElementById('statusArea');
+        logArea.innerHTML += 'Auto-checking for queue...<br>';
+        const {count, latestTime} = await getScheduledInfo(logArea);
         if (count === 0) {
+            const today = getLocalDateStr();
             logArea.innerHTML += 'Queue is empty, auto-generating and scheduling 8 posts...<br>';
             messages = generateRandomMessages();
             saveSettings();
             updateMsgList();
 
-            const times = computeScheduleTimes(today, '23:59', intervalHours, intervalMins, messages.length);
+            const times = computeScheduleTimes(today, startTime, intervalHours, intervalMins, messages.length);
+            let successCount = 0;
             for (let i = 0; i < messages.length; i++) {
                 const targetTime = times[i];
                 const text = messages[i];
                 logArea.innerHTML += `Auto-scheduling at ${targetTime.toLocaleString()}: "${text}"<br>`;
                 const success = await schedulePost(targetTime, text);
                 logArea.innerHTML += success ? '<span style="color:green;">Success</span><br>' : '<span style="color:red;">Failed</span><br>';
+                if (success) successCount++;
                 await wait(2000);
             }
             await openScheduledView(); // Leave on scheduled page for manual pic addition
-            GM_setValue(storagePrefix + 'lastQueuedDate', today);
+            const lastGNTime = times[times.length - 1].getTime() + 5 * 60 * 1000;
+            GM_setValue(storagePrefix + 'nextAutoCheckTime', lastGNTime);
+            statusArea.innerHTML = `Auto-scheduled ${successCount} posts. Next check: ${new Date(lastGNTime).toLocaleString()}`;
         } else {
-            logArea.innerHTML += 'Queue not empty, skipping auto-scheduling.<br>';
+            if (latestTime) {
+                const nextCheck = latestTime + 5 * 60 * 1000;
+                GM_setValue(storagePrefix + 'nextAutoCheckTime', nextCheck);
+                logArea.innerHTML += `Queue not empty (${count} posts), rechecking 5 min after latest post at ${new Date(latestTime).toLocaleString()}.<br>`;
+                statusArea.innerHTML = `Queue: ${count} posts. Next check: ${new Date(nextCheck).toLocaleString()}`;
+            } else {
+                // If parse fails, assume full queue and compute assumed last GN time
+                const assumedTimes = computeScheduleTimes(getLocalDateStr(), startTime, intervalHours, intervalMins, 8);
+                const assumedLastGN = assumedTimes[assumedTimes.length - 1].getTime() + 5 * 60 * 1000;
+                GM_setValue(storagePrefix + 'nextAutoCheckTime', assumedLastGN);
+                logArea.innerHTML += 'Could not parse latest post time, assuming full queue and setting next check 5 min after assumed last GN.<br>';
+                statusArea.innerHTML = `Queue: ${count} posts. Next check: ${new Date(assumedLastGN).toLocaleString()} (assumed)`;
+            }
         }
         logArea.scrollTop = logArea.scrollHeight;
     }
 
-    // Run auto queue
+    function updateTimer() {
+        const next = GM_getValue(storagePrefix + 'nextAutoCheckTime', 0);
+        const remaining = next - Date.now();
+        if (remaining <= 0) {
+            document.getElementById('timerArea').innerText = 'Ready to check queue';
+        } else {
+            const hours = Math.floor(remaining / 3600000);
+            const mins = Math.floor((remaining % 3600000) / 60000);
+            const secs = Math.floor((remaining % 60000) / 1000);
+            document.getElementById('timerArea').innerText = `Next check in ${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+    }
+    setInterval(updateTimer, 1000);
+    updateTimer();
+
+    // Periodic check to trigger autoQueueIfNeeded
+    setInterval(async () => {
+        const now = Date.now();
+        const next = GM_getValue(storagePrefix + 'nextAutoCheckTime', now);
+        if (now >= next) {
+            await autoQueueIfNeeded();
+            updateTimer();
+        }
+    }, 60000); // Check every minute if it's time to run
+
+    // Run initial auto queue check
     await autoQueueIfNeeded();
+    updateTimer();
 
 })();

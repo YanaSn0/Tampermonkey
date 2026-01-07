@@ -14,7 +14,8 @@
 - 1.3 added: Edit button to queue'd messages.
 - 1.4 added: per account emoji and closer.
 - 1.5 added: timezone offset to account configs.
-- 1.6 added: Will auto-run every day. Will not run if queue isn't empty. Finishes on the scheduled posts page for easy edit.
+- 1.6 added: Auto-run every day. Finishes on the scheduled posts page for easy edit.
+- 1.7 fixed: Now with auto daily queuing if empty, and smart checking after last GN.
 <img width="1600" height="900" alt="YanaSn0w1_firefox_kjliR0nIk0_2" src="https://github.com/user-attachments/assets/a20df497-1d2b-4308-8c64-f49e8a61f0e3" />
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅

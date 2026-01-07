@@ -16,6 +16,7 @@
 - 1.5 added: timezone offset to account configs.
 - 1.6 added: Auto-run every day. Finishes on the scheduled posts page for easy edit.
 - 1.7 fixed: Now with auto daily queuing if empty, and smart checking after last GN.
-<img width="1600" height="900" alt="YanaSn0w1_firefox_kjliR0nIk0_2" src="https://github.com/user-attachments/assets/a20df497-1d2b-4308-8c64-f49e8a61f0e3" />
+<img width="1600" height="900" alt="YanaSn0w1_firefox_7YQ3UnAMPh_2" src="https://github.com/user-attachments/assets/ce14d3e0-26fc-4d89-9e1e-f3fd3c2f8284" />
+
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅

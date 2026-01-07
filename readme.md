@@ -7,7 +7,7 @@
 
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler")
 
-## One click, 8 posts scheduled.
+## 8 posts scheduled every day.
 
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.
 - 1.2 fixed: No more duplicate messages.

@@ -46,7 +46,7 @@
             closers: ["Babe", "Hun", "Darling", "Fren"],
             morningEmojis: ["🌹", "😽", "🎨"],
             afternoonEmojis: ["⚡", "🌈", "🌪️"],
-            eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🛡️", "🦁"],
+            eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "😘", "🦁"],
             timezoneOffset: 0
         },
         'YenaFan01': {

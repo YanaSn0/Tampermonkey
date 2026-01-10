@@ -15,7 +15,7 @@
     'use strict';
 
     // Add 2-second delay at start
-    await wait(2000);
+    await wait(3000);
 
     async function wait(ms) {
         return new Promise(r => setTimeout(r, ms));

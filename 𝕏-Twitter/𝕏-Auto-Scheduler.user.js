@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.8
-// @description  UI for scheduling X posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
+// @version      1.9
+// @description  Auto-Scheduler for 𝕏 posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        GM_getValue
@@ -36,38 +36,38 @@
 
     const accountConfigs = {
         'YanaHeat': {
-            closers: ["Love", "everyone", "Builders", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend"],
-            morningEmojis: ["💕", "❤", "🖌️", "🦁", "🙏"],
-            afternoonEmojis: ["🔥", "🚀", "🪭", "💰", "💬"],
-            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵"],
+            closers: ["Love", "everyone", "Builders", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
+            morningEmojis: ["💕", "❤", "🖌️", "🦁", "🙏", "☕", "🌅", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟"],
+            afternoonEmojis: ["🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "💥", "🌬️", "🕑", "🌇", "🍹", "🏞️", "🌅"],
+            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
             timezoneOffset: 0
         },
         'YanaSn0w1': {
-            closers: ["Babe", "Hun", "Darling", "Fren"],
-            morningEmojis: ["🌹", "😽", "🎨"],
-            afternoonEmojis: ["⚡", "🌈", "🌪️"],
-            eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "😘", "🦁"],
+            closers: ["Babe", "Hun", "Darling", "Fren", "Love", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
+            morningEmojis: ["🌹", "😽", "🎨", "☕", "🌅", "😊", "🌻", "✨", "💕", "❤", "🖌️", "🦁", "🙏", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟"],
+            afternoonEmojis: ["⚡", "🌈", "🌬️", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🕑", "🌇", "🍹", "🏞️", "🌅"],
+            eveningNightEmojis: ["🌌", "🥰", "⭐", "🤍", "🏹", "🦁", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
             timezoneOffset: 0
         },
-        'YenaFan01': {
-            closers: ["bro", "yo", "y'all", "Peeps"],
-            morningEmojis: ["🫶🏻", "🍑", "🌮"],
-            afternoonEmojis: ["🌻", "💦", "🐪"],
-            eveningNightEmojis: ["🌆", "✨", "🍸", "🎇", "🌊", "🌜"],
+        'YanaFan01': {
+            closers: ["bro", "yo", "y'all", "Peeps", "Love", "everyone", "Builders", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
+            morningEmojis: ["🫶🏻", "🍑", "🌮", "☕", "🌅", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤"],
+            afternoonEmojis: ["🌻", "💦", "🐪", "⚡", "🌈", "🌪️", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🌬️", "🕑"],
+            eveningNightEmojis: ["🌆", "✨", "🍸", "🎇", "🌊", "🌜", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
             timezoneOffset: +2
         },
-        'YenaFan02': {
-            closers: ["everyone", "champs", "mates", "Builders"],
-            morningEmojis: ["⚔️", "😊", "🌐"],
-            afternoonEmojis: ["🤔", "🎉", "💬"],
-            eveningNightEmojis: ["💜", "🙏", "🏆", "🫡", "⏳", "🌒"],
+        'YanaFan02': {
+            closers: ["everyone", "champs", "mates", "Builders", "Love", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
+            morningEmojis: ["⚔️", "😊", "🌐", "☕", "🌅", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤", "🖌️"],
+            afternoonEmojis: ["🤔", "🎉", "💬", "🔥", "🚀", "🪭", "💰", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "🌪️", "💥", "🌬️", "🕑", "🌇"],
+            eveningNightEmojis: ["💜", "🙏", "🏆", "🫡", "⏳", "🌒", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠"],
             timezoneOffset: 0
         },
-        'YenaFan03': {
-            closers: ["friends", "champ", "mate", "Buddies", "Legends"],
-            morningEmojis: ["🌅", "🌞", "😘"],
-            afternoonEmojis: ["😍", "❤️", "🌅"],
-            eveningNightEmojis: ["🌆", "🌉", "🌙", "❣️", "🌃", "✨"],
+        'YanaFan03': {
+            closers: ["friends", "champ", "mate", "Buddies", "Legends", "Love", "everyone", "Builders", "Peeps", "Family", "Fam", "Frens", "Fren", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
+            morningEmojis: ["🌅", "🌞", "😘", "☕", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤", "🖌️", "🦁"],
+            afternoonEmojis: ["😍", "❤️", "🌅", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "🌪️", "💥", "🌬️", "🕑"],
+            eveningNightEmojis: ["🌆", "🌉", "🌙", "❣️", "🌃", "✨", "🐐", "🕔", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌌", "⭐", "🤍", "🥰", "🦉", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
             timezoneOffset: -5
         }
         // Add more accounts here as needed
@@ -94,12 +94,13 @@
         closers: [
             "fam", "legend", "babe", "everyone", "friends",
             "crew", "squad", "darling", "champ", "baby",
-            "unc", "bro", "mate", "hun", "dear"
+            "unc", "bro", "mate", "hun", "dear", "Love", "Sweetheart", "Honey", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"
         ],
-        morningEmojis: ["🌹", "😽", "☕", "🌅", "😊", "🌻", "✨"],
-        afternoonEmojis: ["⚡", "💖", "🚀", "🌈", "🥳", "🔥", "🍀"],
-        eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫"],
+        morningEmojis: ["🌹", "😽", "☕", "🌅", "😊", "🌻", "✨", "💕", "❤", "🖌️", "🦁", "🙏", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "🎨"],
+        afternoonEmojis: ["⚡", "💖", "🚀", "🌈", "🥳", "🔥", "🍀", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🌬️", "🕑", "🌇", "🍹", "🏞️", "🌅"],
+        eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫", "🌆", "✨", "🌌", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆", "🌑"],
         maxEmojis: 1,
+        regenerateOnAuto: false,
         messages: []
     };
 
@@ -460,13 +461,16 @@
     let intervalMins = GM_getValue(storagePrefix + 'intervalMins', defaults.intervalMins);
     let maxEmojis = GM_getValue(storagePrefix + 'maxEmojis', defaults.maxEmojis);
     if (maxEmojis !== 'random') {
-        maxEmojis = Number(maxEmojis) || 0;
+        maxEmojis = Number(maxEmojis) || 1;
     }
+    let regenerateOnAuto = GM_getValue(storagePrefix + 'regenerateOnAuto', defaults.regenerateOnAuto);
     let messages = GM_getValue(storagePrefix + 'messages', defaults.messages);
+
+    // Always set current date on load
+    startDate = getLocalDateStr();
 
     if (!Array.isArray(messages) || messages.length === 0) {
         messages = generateRandomMessages();
-        GM_setValue(storagePrefix + 'messages', messages);
     }
 
     function saveSettings() {
@@ -475,8 +479,11 @@
         GM_setValue(storagePrefix + 'intervalHours', intervalHours);
         GM_setValue(storagePrefix + 'intervalMins', intervalMins);
         GM_setValue(storagePrefix + 'maxEmojis', maxEmojis);
+        GM_setValue(storagePrefix + 'regenerateOnAuto', regenerateOnAuto);
         GM_setValue(storagePrefix + 'messages', messages);
     }
+
+    saveSettings(); // Save immediately after loading to persist any defaults or overrides
 
     const panel = document.createElement('div');
     panel.style.position = 'fixed';
@@ -513,6 +520,9 @@
                 <option value="2" ${String(maxEmojis) === '2' ? 'selected' : ''}>2</option>
                 <option value="random" ${maxEmojis === 'random' ? 'selected' : ''}>Random (0-2)</option>
             </select>
+        </label>
+        <label style="display:block; margin-bottom:10px;">
+            <input type="checkbox" id="regenerateOnAuto" ${regenerateOnAuto ? 'checked' : ''}> Regenerate messages on auto-queue
         </label>
         <textarea id="newMsg" placeholder="Add new message" style="width:100%; height:60px; padding:8px; border:1px solid #ced4da; border-radius:4px; margin-bottom:10px;"></textarea>
         <button id="addMsgBtn" style="padding:6px 12px; background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">Add Message</button>
@@ -595,6 +605,7 @@
     const intervalHoursInput = document.getElementById('intervalHours');
     const intervalMinsInput = document.getElementById('intervalMins');
     const maxEmojisSelect = document.getElementById('maxEmojis');
+    const regenerateOnAutoCheckbox = document.getElementById('regenerateOnAuto');
     const newMsgInput = document.getElementById('newMsg');
     const addMsgBtn = document.getElementById('addMsgBtn');
     const generateRandomBtn = document.getElementById('generateRandomBtn');
@@ -628,7 +639,7 @@
             logArea.scrollTop = logArea.scrollHeight;
             return;
         }
-        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'messages', 'nextAutoCheckTime'].forEach(key => {
+        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'messages', 'nextAutoCheckTime'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
@@ -658,7 +669,12 @@
 
     maxEmojisSelect.addEventListener('change', () => {
         const value = maxEmojisSelect.value;
-        maxEmojis = value === 'random' ? 'random' : parseInt(value, 10) || 0;
+        maxEmojis = value === 'random' ? 'random' : parseInt(value, 10) || 1;
+        saveSettings();
+    });
+
+    regenerateOnAutoCheckbox.addEventListener('change', () => {
+        regenerateOnAuto = regenerateOnAutoCheckbox.checked;
         saveSettings();
     });
 
@@ -748,7 +764,9 @@
             const today = getLocalDateStr();
             logArea.innerHTML += 'Queue is empty, auto-generating and scheduling 8 posts...<br>';
             logArea.scrollTop = logArea.scrollHeight;
-            messages = generateRandomMessages();
+            if (regenerateOnAuto) {
+                messages = generateRandomMessages();
+            }
             saveSettings();
             updateMsgList();
 

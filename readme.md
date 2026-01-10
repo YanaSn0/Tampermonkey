@@ -18,7 +18,7 @@
 - 1.6 added: Auto-run every day. Finishes on the scheduled posts page for easy edit.
 - 1.7 fixed: Smart checking after last GN.
 - 1.8 fixed: Tightened logic to prevent going to home and entering in the composer after 4.
-- 1.9 fixed: Settings stay set. Randomizes each time if checked in the UI. Added more emoji and closer to be more random.
+- 1.9 fixed: Settings stay set. Generates each time if checked. Added more emoji and closer.
 <img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
 
 

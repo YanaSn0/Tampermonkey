@@ -18,6 +18,7 @@
 - 1.6 added: Auto-run every day. Finishes on the scheduled posts page for easy edit.
 - 1.7 fixed: Smart checking after last GN.
 - 1.8 fixed: Tightened logic to prevent going to home and entering in the composer after 4.
+- 1.9 fixed: Settings stay set. Randomizes each time. Added more emoji and closer.
 <img width="1600" height="900" alt="YanaSn0w1_firefox_7YQ3UnAMPh_2" src="https://github.com/user-attachments/assets/ce14d3e0-26fc-4d89-9e1e-f3fd3c2f8284" />
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅

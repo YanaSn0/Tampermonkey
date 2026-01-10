@@ -10,6 +10,7 @@
 
 ## 8 posts scheduled every day.
 <img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
+
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.
 - 1.2 fixed: No more duplicate messages.
 - 1.3 added: Edit button to queue'd messages.

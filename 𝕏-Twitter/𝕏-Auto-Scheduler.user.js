@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.9
-// @description  Auto-Scheduler for 𝕏 posts with per-account emoji configs. Now with auto daily queuing if empty, and smart checking after last GN.
+// @version      1.10
+// @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        GM_getValue
@@ -13,6 +13,9 @@
 
 (async function() {
     'use strict';
+
+    // Add 2-second delay at start
+    await wait(2000);
 
     async function wait(ms) {
         return new Promise(r => setTimeout(r, ms));
@@ -30,7 +33,7 @@
     let href = profileLink.getAttribute('href') || '';
     href = href.replace(/^\/+/, '').replace(/\/+$/, '');
     if (href.startsWith('@')) href = href.slice(1);
-    const currentUsername = href;
+    let currentUsername = href;
 
     const storagePrefix = currentUsername ? `xSched_${currentUsername}_` : 'xSched_anon_';
 
@@ -49,21 +52,21 @@
             eveningNightEmojis: ["🌌", "🥰", "⭐", "🤍", "🏹", "🦁", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
             timezoneOffset: 0
         },
-        'YanaFan01': {
+        'YenaFan01': {
             closers: ["bro", "yo", "y'all", "Peeps", "Love", "everyone", "Builders", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
             morningEmojis: ["🫶🏻", "🍑", "🌮", "☕", "🌅", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤"],
             afternoonEmojis: ["🌻", "💦", "🐪", "⚡", "🌈", "🌪️", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🌬️", "🕑"],
             eveningNightEmojis: ["🌆", "✨", "🍸", "🎇", "🌊", "🌜", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
             timezoneOffset: +2
         },
-        'YanaFan02': {
+        'YenaFan02': {
             closers: ["everyone", "champs", "mates", "Builders", "Love", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
             morningEmojis: ["⚔️", "😊", "🌐", "☕", "🌅", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤", "🖌️"],
             afternoonEmojis: ["🤔", "🎉", "💬", "🔥", "🚀", "🪭", "💰", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "🌪️", "💥", "🌬️", "🕑", "🌇"],
             eveningNightEmojis: ["💜", "🙏", "🏆", "🫡", "⏳", "🌒", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠"],
             timezoneOffset: 0
         },
-        'YanaFan03': {
+        'YenaFan03': {
             closers: ["friends", "champ", "mate", "Buddies", "Legends", "Love", "everyone", "Builders", "Peeps", "Family", "Fam", "Frens", "Fren", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
             morningEmojis: ["🌅", "🌞", "😘", "☕", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤", "🖌️", "🦁"],
             afternoonEmojis: ["😍", "❤️", "🌅", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "🌪️", "💥", "🌬️", "🕑"],
@@ -99,8 +102,8 @@
         morningEmojis: ["🌹", "😽", "☕", "🌅", "😊", "🌻", "✨", "💕", "❤", "🖌️", "🦁", "🙏", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "🎨"],
         afternoonEmojis: ["⚡", "💖", "🚀", "🌈", "🥳", "🔥", "🍀", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🌬️", "🕑", "🌇", "🍹", "🏞️", "🌅"],
         eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫", "🌆", "✨", "🌌", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆", "🌑"],
-        maxEmojis: 1,
-        regenerateOnAuto: false,
+        maxEmojis: 'random',
+        regenerateOnAuto: true,
         messages: []
     };
 
@@ -460,9 +463,6 @@
     let intervalHours = GM_getValue(storagePrefix + 'intervalHours', defaults.intervalHours);
     let intervalMins = GM_getValue(storagePrefix + 'intervalMins', defaults.intervalMins);
     let maxEmojis = GM_getValue(storagePrefix + 'maxEmojis', defaults.maxEmojis);
-    if (maxEmojis !== 'random') {
-        maxEmojis = Number(maxEmojis) || 1;
-    }
     let regenerateOnAuto = GM_getValue(storagePrefix + 'regenerateOnAuto', defaults.regenerateOnAuto);
     let messages = GM_getValue(storagePrefix + 'messages', defaults.messages);
 
@@ -669,7 +669,7 @@
 
     maxEmojisSelect.addEventListener('change', () => {
         const value = maxEmojisSelect.value;
-        maxEmojis = value === 'random' ? 'random' : parseInt(value, 10) || 1;
+        maxEmojis = value === 'random' ? 'random' : parseInt(value, 10) || 'random';
         saveSettings();
     });
 
@@ -835,5 +835,38 @@
     // Run initial auto queue check
     await autoQueueIfNeeded();
     updateTimer();
+
+    // Monitor for account switches
+    let lastUsername = currentUsername;
+    setInterval(async () => {
+        const newLink = document.querySelector('[data-testid="AppTabBar_Profile_Link"]');
+        if (newLink) {
+            let newHref = newLink.getAttribute('href') || '';
+            newHref = newHref.replace(/^\/+/, '').replace(/\/+$/, '');
+            if (newHref.startsWith('@')) newHref = newHref.slice(1);
+            if (newHref !== lastUsername) {
+                lastUsername = newHref;
+                currentUsername = newHref;
+                const newPrefix = `xSched_${newHref}_`;
+                // Reload settings for new account
+                startDate = GM_getValue(newPrefix + 'startDate', getLocalDateStr());
+                startTime = GM_getValue(newPrefix + 'startTime', defaults.startTime);
+                intervalHours = GM_getValue(newPrefix + 'intervalHours', defaults.intervalHours);
+                intervalMins = GM_getValue(newPrefix + 'intervalMins', defaults.intervalMins);
+                maxEmojis = GM_getValue(newPrefix + 'maxEmojis', defaults.maxEmojis);
+                regenerateOnAuto = GM_getValue(newPrefix + 'regenerateOnAuto', defaults.regenerateOnAuto);
+                messages = GM_getValue(newPrefix + 'messages', generateRandomMessages());
+                // Update panel elements
+                document.getElementById('startDate').value = startDate;
+                document.getElementById('startTime').value = startTime;
+                document.getElementById('intervalHours').value = intervalHours;
+                document.getElementById('intervalMins').value = intervalMins;
+                document.getElementById('maxEmojis').value = maxEmojis;
+                document.getElementById('regenerateOnAuto').checked = regenerateOnAuto;
+                updateMsgList();
+                saveSettings(); // Persist for new account
+            }
+        }
+    }, 2000); // Check every 2 seconds
 
 })();

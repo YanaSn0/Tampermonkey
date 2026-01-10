@@ -17,7 +17,7 @@
 - 1.4 added: per account emoji and closer.
 - 1.5 added: timezone offset to account configs.
 - 1.6 added: Auto-run every day. Finishes on the scheduled posts page for easy edit.
-- 1.7 fixed: Smart checking after last GN.
+- 1.7 fixed: Smart checking after last GN. set time inteval to 2 hour 30 minutes.
 - 1.8 fixed: Tightened logic to prevent going to home and entering in the composer after 4.
 - 1.9 fixed: Regenerates each time if checked. Added more emoji and closer.
 - 1.10 fixed: Default to 0 to 2 emoji and regenerate new to true. Settings stay set.

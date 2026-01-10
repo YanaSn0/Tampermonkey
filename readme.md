@@ -9,7 +9,7 @@
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler")
 
 ## 8 posts scheduled every day.
-
+<img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.
 - 1.2 fixed: No more duplicate messages.
 - 1.3 added: Edit button to queue'd messages.
@@ -18,8 +18,7 @@
 - 1.6 added: Auto-run every day. Finishes on the scheduled posts page for easy edit.
 - 1.7 fixed: Smart checking after last GN.
 - 1.8 fixed: Tightened logic to prevent going to home and entering in the composer after 4.
-- 1.9 fixed: Settings stay set. Generates each time if checked. Added more emoji and closer.
-<img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
-
+- 1.9 fixed: Generates each time if checked. Added more emoji and closer.
+- 1.10 fixed: Set default to 0 to 2 emoji and regenerate new to true.
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅

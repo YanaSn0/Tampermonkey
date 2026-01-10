@@ -89,7 +89,7 @@
         startDate: new Date().toISOString().split('T')[0],
         startTime: '23:59',
         intervalHours: 2,
-        intervalMins: 0,
+        intervalMins: 30,
         gmGreetings: ["Good morning", "GM", "Can I get a GM?"],
         gaGreetings: ["Good afternoon", "GA", "Can I get a GA?"],
         geGreetings: ["Good evening", "GE", "Can I get a GE?"],

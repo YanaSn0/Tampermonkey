@@ -2,9 +2,14 @@
 # [𝕏-Mutual-Manager-Pro](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro.user.js "𝕏-Mutual-Manager-Pro")
 <img width="1600" height="900" alt="YanaSn0w1_firefox_VeGbJLdvBp_2" src="https://github.com/user-attachments/assets/d2aeb3eb-22a4-4a33-b63b-a19cabcf6307" />
 
-## Description
-- Mode 1: Will follow back up to 14 every 15 minutes, will skip default pic, no bio and keywords if enabled. Will do 1 initial check then another smaller set to 50.
-- Mode 2 Will unfollow based on same + non mutual. stops every 200 cells for 30 seconds to avoid rate limit.
+# Description
+## Mode 1:
+- Will follow back up to 14 every 15 minutes.
+- Will skip default pic, no bio and keywords if enabled.
+- Will do 1 initial check then another smaller set to 50.
+## Mode 2:
+- Will unfollow based on same + non mutual.
+- Stops every 200 cells for 30 seconds to avoid rate limit.
 
 ## Install 
 - Install [Tampermonkey]( https://www.google.com/search?q=tampermonkey "Search Google for Tampermonkey")

@@ -8,7 +8,7 @@
 - Will skip default pic, no bio and keywords if enabled.
 - Will do 1 initial check then another smaller set to 50.
 - Mode 2:
-- Will unfollow based on same + non mutual.
+- Will unfollow based on same conditions as above + non mutual.
 - Stops every 200 cells for 30 seconds to avoid rate limit.
 
 ## Install 

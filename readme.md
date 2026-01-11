@@ -13,7 +13,10 @@
 
 ## Install 
 - Install [Tampermonkey]( https://www.google.com/search?q=tampermonkey "Search Google for Tampermonkey")
-- Pin Tampermonkey as an extension in chrome or firefox, click it then dashboard, click the plus to add new and paste the entire script in then save. then go to your following and reload the page.
+- Pin Tampermonkey as an extension in chrome or firefox.
+-  Click it then dashboard.
+-  Click the plus to add new and paste the entire script in then save. 
+-  Go to your following and reload the page to initiate the script.
 
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.
 

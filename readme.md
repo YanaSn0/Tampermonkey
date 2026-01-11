@@ -14,7 +14,7 @@
 ## Install 
 - Install [Tampermonkey]( https://www.google.com/search?q=tampermonkey "Search Google for Tampermonkey")
 - Pin Tampermonkey as an extension in chrome or firefox.
--  Click it then dashboard.
+-  Click the pin then the dashboard.
 -  Click the plus to add new and paste the entire script in then save. 
 -  Go to your following and reload the page to initiate the script.
 

@@ -14,7 +14,7 @@
 (async function() {
     'use strict';
 
-    // Add 2-second delay at start
+    // Add 3-second delay at start
     await wait(3000);
 
     async function wait(ms) {

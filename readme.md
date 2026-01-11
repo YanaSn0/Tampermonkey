@@ -19,7 +19,7 @@
 - 1.6 added: Auto-run every day. Finishes on the scheduled posts page for easy edit.
 - 1.7 fixed: Smart checking after last GN. set time inteval to 2 hour 30 minutes.
 - 1.8 fixed: Tightened logic to prevent going to home and entering in the composer after 4.
-- 1.9 fixed: Regenerates each time if checked. Added more emoji and closer.
+- 1.9 added: Regenerates each time if checked. Added more emoji and closer.
 - 1.10 fixed: Default to 0 to 2 emoji and regenerate new to true. Settings stay set.
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅

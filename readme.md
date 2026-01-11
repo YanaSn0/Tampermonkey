@@ -8,7 +8,7 @@
 
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler")
 
-## 8 auto-scheduled posts a day.
+## 8 Auto-scheduled posts a day.
 <img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
 
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.

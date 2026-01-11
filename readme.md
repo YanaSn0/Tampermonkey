@@ -3,11 +3,11 @@
 <img width="1600" height="900" alt="YanaSn0w1_firefox_VeGbJLdvBp_2" src="https://github.com/user-attachments/assets/d2aeb3eb-22a4-4a33-b63b-a19cabcf6307" />
 
 # Description
-## Mode 1:
+- Mode 1:
 - Will follow back up to 14 every 15 minutes.
 - Will skip default pic, no bio and keywords if enabled.
 - Will do 1 initial check then another smaller set to 50.
-## Mode 2:
+- Mode 2:
 - Will unfollow based on same + non mutual.
 - Stops every 200 cells for 30 seconds to avoid rate limit.
 

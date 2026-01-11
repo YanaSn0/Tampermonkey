@@ -1,6 +1,9 @@
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅
 # [𝕏-Mutual-Manager-Pro](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro.user.js "𝕏-Mutual-Manager-Pro")
 
+## Description
+- Will follow back up to 14 every 15 minutes, will skip default pic, no bio and keywords
+
 ## Install 
 - Install [Tampermonkey]( https://www.google.com/search?q=tampermonkey "Search Google for Tampermonkey")
 - Pin Tampermonkey as an extension in chrome or firefox, click it then dashboard, click the plus to add new and paste the entire script in then save. then past

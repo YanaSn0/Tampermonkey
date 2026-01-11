@@ -9,6 +9,7 @@
 - Will do 1 initial check then another smaller set to 50.
 - Mode 2:
 - Will unfollow based on same conditions as above + non mutual.
+- 150 every 15 minutes starting from first to be safe.
 - Stops every 200 cells for 30 seconds to avoid rate limit.
 
 ## Install 

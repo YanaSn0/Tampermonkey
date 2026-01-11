@@ -17,7 +17,7 @@
 -  Click the pin then the dashboard.
 -  Click the plus to add new and paste the entire script in then save. 
 -  Go to your following and reload the page to initiate the script.
--  May not work so well if not viewable as main window but half window works so use window snap in the maximize button or a VM.
+-  May not work so well if not viewable as main window but half window works so use window snap in the maximize button or a Virtual Machine.
 
 ## Fixes
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.

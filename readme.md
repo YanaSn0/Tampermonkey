@@ -18,6 +18,7 @@
 -  Click the plus to add new and paste the entire script in then save. 
 -  Go to your following and reload the page to initiate the script.
 
+## Fixes
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.
 
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler")

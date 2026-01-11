@@ -2,7 +2,7 @@
 # [𝕏-Mutual-Manager-Pro](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro.user.js "𝕏-Mutual-Manager-Pro")
 
 ## Install 
-- Install [Tampermonkey]( https://www.google.com/search?q=tampermonkey "Install Tampermonkey")
+- Install [Tampermonkey]( https://www.google.com/search?q=tampermonkey "Search Google for Tampermonkey")
 - Pin Tampermonkey as an extension in chrome or firefox, click it then dashboard, click the plus to add new and paste the entire script in then save. then past
 <img width="1600" height="900" alt="YanaSn0w1_firefox_VeGbJLdvBp_2" src="https://github.com/user-attachments/assets/d2aeb3eb-22a4-4a33-b63b-a19cabcf6307" />
 

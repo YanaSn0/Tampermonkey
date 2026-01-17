@@ -545,6 +545,11 @@
       fbTimerSpan.textContent = `${h}:${m}:${s}`;
       if (remaining <= 0) {
         setCooldownEnd(0);
+        setCycleFollows(0);
+        if (verifiedUrl) {
+          console.log('Cooldown ended, reloading verified followers page');
+          window.location.href = verifiedUrl;
+        }
       }
     }, 1000);
   }
@@ -881,12 +886,7 @@
         console.log('First scan complete: Set scan max to 50 for next times');
       }
 
-      if (cycleFollows >= fbMaxPerPeriod) {
-        console.log('Reached 14 via follow-back, staying in FB mode under cooldown');
-        return;
-      }
-
-      console.log('Follow-back did not reach 14, switching to thread fallback');
+      console.log('Switching to follow 2 to finish up to 14');
       setNeedThreadFallback(true);
       await new Promise(r => setTimeout(r, 3000));
       window.location.href = 'https://x.com/home';

@@ -1,5 +1,5 @@
-# [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅
-# [𝕏-Mutual-Manager-Pro](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro.user.js "𝕏-Mutual-Manager-Pro") ⬅️✅
+# [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️
+# [𝕏-Mutual-Manager-Pro](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro.user.js "𝕏-Mutual-Manager-Pro") ⬅️
 <img width="1600" height="900" alt="YanaSn0w1_firefox_VeGbJLdvBp_2" src="https://github.com/user-attachments/assets/d2aeb3eb-22a4-4a33-b63b-a19cabcf6307" />
 
 # Description
@@ -23,13 +23,13 @@
 ## Fixes
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.
 
-# [𝕏-Mutual-Manager-Pro-Plus](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro-Plus.user.js "𝕏-Mutual-Manager-Pro-Plus") ⬅️✅
+# [𝕏-Mutual-Manager-Pro-Plus](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro-Plus.user.js "𝕏-Mutual-Manager-Pro-Plus") ⬅️
 <img width="1600" height="900" alt="YanaHeat_firefox_LHJ1ZJmZ6e" src="https://github.com/user-attachments/assets/123c2c87-e73f-4ea3-bea0-dd90d8078b0a" />
 
 # Description
 - 1.1.0 added: Follow verified Reply Guys if did not find 14 to Follow Back.
   
-# [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler") ⬅️✅
+# [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler") ⬅️
 <img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
 
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.
@@ -43,4 +43,4 @@
 - 1.9 added: Regenerates each time if checked. Added more emoji and closer.
 - 1.10 fixed: Default to 0 to 2 emoji and regenerate new to true. Settings stay set.
 
-# [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️✅
+# [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️

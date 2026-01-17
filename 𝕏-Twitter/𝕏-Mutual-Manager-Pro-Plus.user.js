@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.1.1
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -1105,6 +1105,8 @@
     window.scrollTo(0, document.body.scrollHeight);
     const processed = new Set();
     let count = 0;
+    let consecutiveAlreadyFollowing = 0;
+    const homeFollowed = 5;
 
     function processVisibleTweets() {
       const tweets = Array.from(document.querySelectorAll('article[data-testid="tweet"]'));
@@ -1136,7 +1138,16 @@
             handleVerifiedFollow(tweet).then(() => {
               setTimeout(processVisibleTweets, 3000);
             });
+            consecutiveAlreadyFollowing = 0;
             return;
+          } else if (isVerified) {
+            consecutiveAlreadyFollowing++;
+            if (consecutiveAlreadyFollowing >= homeFollowed) {
+              console.log('Found 5 consecutive already following verified, stopping as failsafe');
+              return;
+            }
+          } else {
+            consecutiveAlreadyFollowing = 0;
           }
 
           setTimeout(processVisibleTweets, 3000);

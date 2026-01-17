@@ -29,7 +29,8 @@
 
 
 # Description
-- Mode 1: Same as above but if did not find 14 then do follow Verified Reply Guys!
+- Same as above but if did not find 14 then will follow Verified Reply Guys from posts on home.
+- Mostly un tested
   
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler")
 <img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />

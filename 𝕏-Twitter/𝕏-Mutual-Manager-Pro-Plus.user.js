@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.2
+// @version      1.1.1
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -886,7 +886,12 @@
         console.log('First scan complete: Set scan max to 50 for next times');
       }
 
-      console.log('Switching to follow 2 to finish up to 14');
+      if (cycleFollows >= fbMaxPerPeriod) {
+        console.log('Reached 14 via follow-back, staying in FB mode under cooldown');
+        return;
+      }
+
+      console.log('Follow-back did not reach 14, switching to thread fallback');
       setNeedThreadFallback(true);
       await new Promise(r => setTimeout(r, 3000));
       window.location.href = 'https://x.com/home';
@@ -901,12 +906,6 @@
       paused = !paused;
       startBtn.textContent = paused ? 'Start' : 'Pause';
       if (!running && !paused) {
-        if (getCooldownEnd() > Date.now()) {
-          console.log('Cooldown active, cannot start yet');
-          paused = true;
-          startBtn.textContent = 'Start';
-          return;
-        }
         running = true;
         (async () => {
           let lastScroll = window.scrollY;

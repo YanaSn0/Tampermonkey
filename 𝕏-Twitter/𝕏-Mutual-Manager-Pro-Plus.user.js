@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.2
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -1149,7 +1149,10 @@
       setTimeout(() => {
         if (document.documentElement.scrollTop === 0) {
           console.log('Reached the top in thread fallback.');
-          if (verifiedUrl) window.location.href = verifiedUrl;
+          if (followCount >= fbMaxPerPeriod && verifiedUrl) {
+            window.location.href = verifiedUrl;
+          }
+          // else stay on home to wait for cooldown
         } else {
           processVisibleTweets();
         }

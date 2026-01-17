@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.0
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -966,6 +966,11 @@
 
   updateGlobalCountUI(followCount, 0, 0);
 
+  if (followCount >= fbMaxPerPeriod) {
+    modeLine.textContent = 'Mode: Waiting for Cooldown';
+    return;
+  }
+
   function extractPostId(tweet) {
     const link = tweet.querySelector('a[href*="/status/"] time')?.parentElement;
     if (link) {
@@ -1109,8 +1114,7 @@
 
       for (const tweet of reversedTweets) {
         if (followCount >= fbMaxPerPeriod) {
-          console.log('Thread fallback reached 14, redirecting to verified followers');
-          if (verifiedUrl) window.location.href = verifiedUrl;
+          console.log('Thread fallback reached 14');
           return;
         }
 
@@ -1151,10 +1155,6 @@
       setTimeout(() => {
         if (document.documentElement.scrollTop === 0) {
           console.log('Reached the top in thread fallback.');
-          if (followCount >= fbMaxPerPeriod && verifiedUrl) {
-            window.location.href = verifiedUrl;
-          }
-          // else stay on home to wait for cooldown
         } else {
           processVisibleTweets();
         }

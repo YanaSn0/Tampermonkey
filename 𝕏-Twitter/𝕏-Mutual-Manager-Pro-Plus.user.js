@@ -1143,7 +1143,10 @@
           } else if (isVerified) {
             consecutiveAlreadyFollowing++;
             if (consecutiveAlreadyFollowing >= homeFollowed) {
-              console.log('Found 5 consecutive already following verified, stopping as failsafe');
+              console.log('Found 5 consecutive already following verified, loading home');
+              if (followCount < fbMaxPerPeriod) {
+                window.location.href = 'https://x.com/home';
+              }
               return;
             }
           } else {
@@ -1166,6 +1169,9 @@
       setTimeout(() => {
         if (document.documentElement.scrollTop === 0) {
           console.log('Reached the top in thread fallback.');
+          if (followCount < fbMaxPerPeriod) {
+            window.location.href = 'https://x.com/home';
+          }
         } else {
           processVisibleTweets();
         }

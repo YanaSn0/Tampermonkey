@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.2
+// @version      1.1.0
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -963,6 +963,8 @@
 
   let followCount = getCycleFollows();
   let isScrolling = false;
+
+  updateGlobalCountUI(followCount, 0, 0);
 
   function extractPostId(tweet) {
     const link = tweet.querySelector('a[href*="/status/"] time')?.parentElement;

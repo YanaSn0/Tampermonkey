@@ -23,6 +23,13 @@
 ## Fixes
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.
 
+# [𝕏-Mutual-Manager-Pro-Plus](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro-Plus.user.js "𝕏-Mutual-Manager-Pro-Plus")
+<img width="1600" height="900" alt="Telegram_1BKI0T8CHL" src="https://github.com/user-attachments/assets/0c37750e-1a07-4b74-b568-3fdd082fe025" />
+
+
+# Description
+- Mode 1: Same as above but if did not find 14 then do follow Verified Reply Guys!
+  
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler")
 <img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
 

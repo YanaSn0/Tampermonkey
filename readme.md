@@ -27,7 +27,7 @@
 <img width="1600" height="900" alt="YanaHeat_firefox_LHJ1ZJmZ6e" src="https://github.com/user-attachments/assets/123c2c87-e73f-4ea3-bea0-dd90d8078b0a" />
 
 # Description
-- 1.1.0 added: Follow verified Reply Guys if did not find 14 to Follow Back.
+- 1.1.0 added: If did not FB 14 then click home, click top post, scroll to very bottom and follow verified one by one.
   
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler") ⬅️
 <img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />

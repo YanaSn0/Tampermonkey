@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.2
+// @version      1.1.3
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -815,23 +815,39 @@
           continue;
         }
 
+        followBackBtn.click();
+
+        let rateLimited = false;
         let success = false;
-        let attempts = 0;
-        while (!success && attempts < 3) {
-          attempts++;
-          followBackBtn.click();
-          await new Promise(r => setTimeout(r, 2000));
-          if (isRateLimited()) {
-            if (!getCooldownEnd()) {
-              const end = Date.now() + ACTION_CD;
-              setCooldownEnd(end);
-              startGlobalCooldownTicker();
+        await new Promise((resolve) => {
+          let checks = 0;
+          const checkInt = setInterval(() => {
+            checks++;
+            if (isRateLimited()) {
+              rateLimited = true;
+              clearInterval(checkInt);
+              resolve();
+            } else if (!cell.querySelector('button[aria-label*="Follow back @"]')) {
+              success = true;
+              clearInterval(checkInt);
+              resolve();
             }
-            return proc;
+            if (checks >= 10) { // 5 seconds (500ms * 10)
+              clearInterval(checkInt);
+              resolve();
+            }
+          }, 500);
+        });
+
+        if (rateLimited) {
+          if (!getCooldownEnd()) {
+            const end = Date.now() + ACTION_CD;
+            setCooldownEnd(end);
+            startGlobalCooldownTicker();
           }
-          if (!cell.querySelector('button[aria-label*="Follow back @"]')) {
-            success = true;
-          }
+          setCycleFollows(fbMaxPerPeriod);
+          cell.style.border = '2px solid orange';
+          return proc;
         }
 
         if (success) {
@@ -845,6 +861,8 @@
             setCooldownEnd(end);
             startGlobalCooldownTicker();
           }
+        } else {
+          cell.style.border = '2px solid orange';
         }
 
         await randomDelay();
@@ -1055,14 +1073,40 @@
       const label = followBtn.innerText.trim().toLowerCase();
       if (label === 'follow' || label === 'follow back') {
         followBtn.click();
-        await new Promise(r => setTimeout(r, 2000));
-        if (isRateLimited()) {
+
+        let rateLimited = false;
+        let success = false;
+        await new Promise((resolve) => {
+          let checks = 0;
+          const checkInt = setInterval(() => {
+            checks++;
+            if (isRateLimited()) {
+              rateLimited = true;
+              clearInterval(checkInt);
+              resolve();
+            } else if (findFollowButton() === null) {
+              success = true;
+              clearInterval(checkInt);
+              resolve();
+            }
+            if (checks >= 10) {
+              clearInterval(checkInt);
+              resolve();
+            }
+          }, 500);
+        });
+
+        if (rateLimited) {
           if (!getCooldownEnd()) {
             const end = Date.now() + ACTION_CD;
             setCooldownEnd(end);
             startGlobalCooldownTicker();
           }
-        } else {
+          setCycleFollows(fbMaxPerPeriod);
+          return;
+        }
+
+        if (success) {
           followCount++;
           setCycleFollows(followCount);
           updateGlobalCountUI(followCount, 0, 0);
@@ -1082,7 +1126,6 @@
   function startProcessingFromBottom(postId) {
     window.scrollTo(0, document.body.scrollHeight);
     const processed = new Set();
-    let count = 0;
     let consecutiveAlreadyFollowing = 0;
     const homeFollowed = 5;
 
@@ -1111,7 +1154,6 @@
         if (postId && !processed.has(postId)) {
           scrollToCellWithOffset(tweet);
           const isVerified = checkIfVerified(tweet);
-          count++;
           processed.add(postId);
           newProcessed = true;
 

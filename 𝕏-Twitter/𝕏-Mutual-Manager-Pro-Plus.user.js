@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.3
+// @version      1.1.1
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -114,7 +114,8 @@
     if (
       msg.includes('rate limit') ||
       msg.includes('unable to follow more people') ||
-      msg.includes('you are unable to follow')
+      msg.includes('you are unable to follow') ||
+      msg.includes('you are rate limited')
     ) {
       return true;
     }

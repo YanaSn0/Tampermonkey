@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.2
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -820,7 +820,7 @@
         while (!success && attempts < 3) {
           attempts++;
           followBackBtn.click();
-          await new Promise(r => setTimeout(r, 800));
+          await new Promise(r => setTimeout(r, 2000));
           if (isRateLimited()) {
             if (!getCooldownEnd()) {
               const end = Date.now() + ACTION_CD;
@@ -1055,7 +1055,7 @@
       const label = followBtn.innerText.trim().toLowerCase();
       if (label === 'follow' || label === 'follow back') {
         followBtn.click();
-        await new Promise(r => setTimeout(r, 800));
+        await new Promise(r => setTimeout(r, 2000));
         if (isRateLimited()) {
           if (!getCooldownEnd()) {
             const end = Date.now() + ACTION_CD;

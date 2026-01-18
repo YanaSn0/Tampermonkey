@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.0
+// @version      1.1.1
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -116,7 +116,6 @@
       msg.includes('unable to follow more people') ||
       msg.includes('you are unable to follow')
     ) {
-      console.log('FOLLOW/LIMIT TOAST DETECTED:', msg);
       return true;
     }
     return false;
@@ -141,7 +140,6 @@
     getCells().forEach(cell => {
       cell.style.border = '';
     });
-    console.log('UI reset complete');
   }
 
   // ===== SHARED FOLLOW COUNT + COOLDOWN =====
@@ -227,7 +225,7 @@
   resetBtn.textContent = 'Reset FB State';
   resetBtn.style.cssText = 'padding:8px;font-weight:bold;cursor:pointer;border-radius:6px;background:#f44336;color:white;';
   resetBtn.onclick = () => {
-    ['um_fb_cycle', 'um_fb_cooldownEnd', 'um_fb_firstScan', 'um_fb_scan_max', 'um_fb_need_thread'].forEach(k => localStorage.removeItem(k));
+    ['um_fb_cycle', 'um_fb_cooldownEnd', 'um_fb_firstScan', 'um_fb_scan_max', 'um_fb_need_thread', 'um_processed_threads'].forEach(k => localStorage.removeItem(k));
     resetUI();
     location.reload();
   };
@@ -546,8 +544,8 @@
       if (remaining <= 0) {
         setCooldownEnd(0);
         setCycleFollows(0);
+        setNeedThreadFallback(false);
         if (verifiedUrl) {
-          console.log('Cooldown ended, reloading verified followers page');
           window.location.href = verifiedUrl;
         }
       }
@@ -642,7 +640,6 @@
       let processedCount = 0;
       for (let cell of batch) {
         if (actionedInPeriod >= UF_MAX_PER_PERIOD) {
-          console.log('Max unfollows reached, stopping');
           break;
         }
 
@@ -654,7 +651,6 @@
 
         if (WHITELIST.includes(user)) {
           cell.style.border = '2px solid orange';
-          console.log(`Skipping ${user}: whitelisted`);
           continue;
         }
 
@@ -666,14 +662,12 @@
 
         if (reasons.length === 0) {
           cell.style.border = '2px solid green';
-          console.log(`Skipping ${user}: mutual and not bot-like`);
           continue;
         }
 
         const btn = cell.querySelector('button[aria-label^="Following @"], button[data-testid$="-unfollow"]');
         if (!btn) {
           cell.style.border = '2px solid orange';
-          console.log(`Skipping ${user}: no unfollow button`);
           continue;
         }
 
@@ -685,11 +679,9 @@
           actionedInPeriod++;
           if (actionedInPeriod === 1) startNewTimer();
           saveState();
-          console.log(`Unfollowed ${user}: ${reasons.join(', ')}`);
         } else {
           if (isRateLimited()) startNewTimer();
           cell.style.border = '2px solid orange';
-          console.log(`Failed to unfollow ${user}: rate limited or no confirm`);
         }
 
         await randomDelay();
@@ -709,7 +701,6 @@
         return;
       }
       if (actionedInPeriod >= UF_MAX_PER_PERIOD) {
-        console.log('Limit already reached in this period');
         return;
       }
       running = true;
@@ -803,28 +794,24 @@
 
         if (WHITELIST.includes(user)) {
           cell.style.border = '2px solid orange';
-          console.log(`Skipping ${user}: whitelisted`);
           continue;
         }
 
         const { isBotLike, reasons } = getBotInfo(cell);
         if (isBotLike) {
           cell.style.border = '2px solid purple';
-          console.log(`Skipping ${user}: bot-like (${reasons.join(', ')})`);
           continue;
         }
 
         const alreadyFollowing = cell.querySelector('button[aria-label^="Following @"]');
         if (alreadyFollowing) {
           cell.style.border = '2px solid green';
-          console.log(`Skipping ${user}: already following`);
           continue;
         }
 
         const followBackBtn = cell.querySelector('button[aria-label*="Follow back @"]');
         if (!followBackBtn) {
           cell.style.border = '2px solid gray';
-          console.log(`Skipping ${user}: no follow back button`);
           continue;
         }
 
@@ -835,7 +822,6 @@
           followBackBtn.click();
           await new Promise(r => setTimeout(r, 800));
           if (isRateLimited()) {
-            console.log('Daily cap hit, starting cooldown');
             if (!getCooldownEnd()) {
               const end = Date.now() + ACTION_CD;
               setCooldownEnd(end);
@@ -853,16 +839,12 @@
           cycleFollows++;
           setCycleFollows(cycleFollows);
           updateUI();
-          console.log(`Followed ${user}: eligible follow back`);
 
           if (cycleFollows === 1 && !getCooldownEnd()) {
             const end = Date.now() + ACTION_CD;
             setCooldownEnd(end);
             startGlobalCooldownTicker();
-            console.log('Cooldown started from first FB follow');
           }
-        } else {
-          console.log(`Failed to follow ${user}: after ${attempts} attempts`);
         }
 
         await randomDelay();
@@ -872,7 +854,6 @@
 
     async function finishPage() {
       if (getFollowUnv() && isVerifiedFollowersPage && (scanTotal >= FB_SCAN_MIN || scanTotal >= fbScanMax)) {
-        console.log('Verified page done, switching to unverified followers');
         await new Promise(r => setTimeout(r, 5000));
         if (normalUrl) window.location.href = normalUrl;
         return;
@@ -883,10 +864,8 @@
         firstScan = false;
         fbScanMax = SC_POST;
         localStorage.setItem('um_fb_scan_max', SC_POST);
-        console.log('First scan complete: Set scan max to 50 for next times');
       }
 
-      console.log('Switching to follow 2 to finish up to 14');
       setNeedThreadFallback(true);
       await new Promise(r => setTimeout(r, 3000));
       window.location.href = 'https://x.com/home';
@@ -971,6 +950,8 @@
     return;
   }
 
+  let processedThreads = JSON.parse(localStorage.getItem('um_processed_threads') || '[]');
+
   function extractPostId(tweet) {
     const link = tweet.querySelector('a[href*="/status/"] time')?.parentElement;
     if (link) {
@@ -985,7 +966,6 @@
     const offset = 50;
     const rect = cell.getBoundingClientRect();
     window.scrollTo(0, rect.top + window.scrollY - offset);
-    console.log('Scrolled to tweet with offset.');
   }
 
   function checkIfVerified(cell) {
@@ -997,7 +977,6 @@
     const spamButtons = Array.from(document.querySelectorAll('[data-testid="cellInnerDiv"] button'));
     const filteredButtons = spamButtons.filter(btn => btn.textContent.includes('Show probable spam'));
     for (const btn of filteredButtons) {
-      console.log('Clicking "Show probable spam" button...');
       btn.click();
     }
   }
@@ -1023,7 +1002,6 @@
         if (stableCount >= stabilityThreshold || attempts >= maxAttempts) {
           clearInterval(interval);
           isScrolling = false;
-          console.log('Scrolling complete for this cycle.');
           callback();
         }
       }, 200);
@@ -1065,11 +1043,9 @@
       tweet.querySelector('a[href^="/"][role="link"]');
 
     if (!profileLink) {
-      console.log('No profile link found.');
       return;
     }
 
-    console.log('Opening verified profile…');
     profileLink.click();
 
     await waitForProfileHeader();
@@ -1079,29 +1055,31 @@
       const label = followBtn.innerText.trim().toLowerCase();
       if (label === 'follow' || label === 'follow back') {
         followBtn.click();
-        followCount++;
-        setCycleFollows(followCount);
-        updateGlobalCountUI(followCount, 0, 0);
-        console.log(`Followed via thread. Count = ${followCount}/${fbMaxPerPeriod}`);
-
-        if (followCount === 1 && !getCooldownEnd()) {
-          const end = Date.now() + ACTION_CD;
-          setCooldownEnd(end);
-          startGlobalCooldownTicker();
-          console.log('Cooldown started from first thread follow');
+        await new Promise(r => setTimeout(r, 800));
+        if (isRateLimited()) {
+          if (!getCooldownEnd()) {
+            const end = Date.now() + ACTION_CD;
+            setCooldownEnd(end);
+            startGlobalCooldownTicker();
+          }
+        } else {
+          followCount++;
+          setCycleFollows(followCount);
+          updateGlobalCountUI(followCount, 0, 0);
+          if (followCount === 1 && !getCooldownEnd()) {
+            const end = Date.now() + ACTION_CD;
+            setCooldownEnd(end);
+            startGlobalCooldownTicker();
+          }
         }
-      } else {
-        console.log('Already following.');
       }
-    } else {
-      console.log('No follow button found.');
     }
 
     window.history.back();
     await waitForThreadReturn();
   }
 
-  function startProcessingFromBottom() {
+  function startProcessingFromBottom(postId) {
     window.scrollTo(0, document.body.scrollHeight);
     const processed = new Set();
     let count = 0;
@@ -1109,6 +1087,11 @@
     const homeFollowed = 5;
 
     function processVisibleTweets() {
+      if (followCount >= fbMaxPerPeriod) {
+        localStorage.removeItem('um_processed_threads');
+        return;
+      }
+
       const tweets = Array.from(document.querySelectorAll('article[data-testid="tweet"]'));
       const reversedTweets = tweets.reverse();
 
@@ -1116,12 +1099,11 @@
 
       for (const tweet of reversedTweets) {
         if (followCount >= fbMaxPerPeriod) {
-          console.log('Thread fallback reached 14');
+          localStorage.removeItem('um_processed_threads');
           return;
         }
 
         if (tweet.querySelector('h2')) {
-          console.log('Skipped sidebar module.');
           continue;
         }
 
@@ -1130,7 +1112,6 @@
           scrollToCellWithOffset(tweet);
           const isVerified = checkIfVerified(tweet);
           count++;
-          console.log(`Tweet #${count} (from bottom): Verified = ${isVerified}`);
           processed.add(postId);
           newProcessed = true;
 
@@ -1143,7 +1124,6 @@
           } else if (isVerified) {
             consecutiveAlreadyFollowing++;
             if (consecutiveAlreadyFollowing >= homeFollowed) {
-              console.log('Found 5 consecutive already following verified, loading home');
               if (followCount < fbMaxPerPeriod) {
                 window.location.href = 'https://x.com/home';
               }
@@ -1164,11 +1144,11 @@
       }
 
       window.scrollBy(0, -window.innerHeight);
-      console.log('Scrolled up to load more upper tweets.');
 
       setTimeout(() => {
         if (document.documentElement.scrollTop === 0) {
-          console.log('Reached the top in thread fallback.');
+          processedThreads.push(postId);
+          localStorage.setItem('um_processed_threads', JSON.stringify(processedThreads));
           if (followCount < fbMaxPerPeriod) {
             window.location.href = 'https://x.com/home';
           }
@@ -1181,15 +1161,14 @@
     processVisibleTweets();
   }
 
-  function loadFullThread() {
+  function loadFullThread(postId) {
     spamScrollToBottom(() => {
       setTimeout(() => {
         const spamButtons = document.querySelectorAll('[data-testid="cellInnerDiv"] button');
         if (spamButtons.length > 0 && Array.from(spamButtons).some(btn => btn.textContent.includes('Show probable spam'))) {
-          loadFullThread();
+          loadFullThread(postId);
         } else {
-          console.log('No more spam buttons. Thread fully loaded.');
-          startProcessingFromBottom();
+          startProcessingFromBottom(postId);
         }
       }, 10000);
     });
@@ -1199,32 +1178,58 @@
     const homeLink = document.querySelector('a[data-testid="AppTabBar_Home_Link"]') ||
       document.querySelector('a[href="/home"]');
     if (homeLink) {
-      console.log('Navigating to home...');
       homeLink.click();
-    } else {
-      console.log('Home link not found. Assuming already on home or proceeding.');
     }
 
-    await new Promise(resolve => setTimeout(resolve, 10000));
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
-    const firstTweet = document.querySelector('article[data-testid="tweet"]');
-    if (firstTweet) {
-      const postLink = firstTweet.querySelector('a[href*="/status/"] time')?.parentElement;
+    let attempts = 0;
+    const maxAttempts = 20;
+
+    while (followCount < fbMaxPerPeriod && attempts < maxAttempts) {
+      const tweets = Array.from(document.querySelectorAll('article[data-testid="tweet"]'));
+
+      let postToOpen = null;
+
+      for (const tweet of tweets) {
+        const postId = extractPostId(tweet);
+        if (postId && !processedThreads.includes(postId)) {
+          postToOpen = tweet;
+          break;
+        }
+      }
+
+      if (!postToOpen) {
+        window.scrollBy(0, window.innerHeight * 2);
+        await new Promise(r => setTimeout(r, 2000));
+        attempts++;
+        continue;
+      }
+
+      const postId = extractPostId(postToOpen);
+      const postLink = postToOpen.querySelector('a[href*="/status/"] time')?.parentElement;
       if (postLink) {
-        console.log('Opening first post in timeline...');
         postLink.click();
         await new Promise(resolve => setTimeout(resolve, 5000));
-      } else {
-        console.log('No post link found in first tweet.');
+        loadFullThread(postId);
+        return;
       }
-    } else {
-      console.log('No tweets found in timeline.');
+
+      attempts++;
+    }
+
+    if (attempts >= maxAttempts) {
+      setNeedThreadFallback(false);
     }
   }
 
   (async () => {
-    await navigateToHomeAndOpenPost();
-    loadFullThread();
+    if (window.location.pathname.match(/\/status\/\d+/)) {
+      const postId = window.location.pathname.match(/\/status\/(\d+)/)[1];
+      loadFullThread(postId);
+    } else {
+      await navigateToHomeAndOpenPost();
+    }
   })();
 
 })();

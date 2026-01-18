@@ -34,6 +34,7 @@
 - Does not need to go to home once found 14 can just stop.
 - Needs to wait 15 and set timer if got rate limit message or the max day follow message.
 - Unfollow not working.
+- 1.1.1 un tested, attempt to fix all bugs at once.
   
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler") ⬅️
 <img width="1600" height="852" alt="YanaHeat_firefox_stCMgofqIV" src="https://github.com/user-attachments/assets/91fe1f6d-b67a-4674-b3ee-578d3e058202" />

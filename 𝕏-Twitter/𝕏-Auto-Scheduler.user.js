@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.10
+// @version      1.11
 // @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -37,40 +37,78 @@
 
     const storagePrefix = currentUsername ? `xSched_${currentUsername}_` : 'xSched_anon_';
 
+    const modes = {
+        'Flirty': {
+            closers: ["Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful",
+                      "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae",
+                      "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie",
+                      "Gorgeous", "Muffin"],
+            morningEmojis: ["💕", "❤", "😘", "😍", "🌹", "😽", "💋", "🥰", "💖", "😊"],
+            afternoonEmojis: ["🔥", "💦", "😎", "💋", "🌹", "😘", "💖", "🥰", "😍", "🌞"],
+            eveningNightEmojis: ["🌙", "💋", "🥂", "😘", "💖", "🥰", "🌌", "⭐", "🤍", "😍"]
+        },
+        'Boost': {
+            closers: ["Say just Hello", "Gain 70 followers", "Turn on notifications", "Active accounts?", "Grow 101 Organic Followers",
+                      "We follow you.", "Who needs 500 followrs", "We will connect fast", "Gain 200 foIIowers is easy!!!", "Say Hi, we follow you instantly",
+                      "God bless reply guys", "Thank you God for the boost", "Thank you God for Consistency", "TY, appreciate the follow.",
+                      "Follow backs guaranteed", "Active people only", "Gain Train rolling", "We’ll help you reach 10k+", "Looking to grow your handle?", "Normalize Following Small Accounts",
+                      "Keep on crankin' follows"],
+            morningEmojis: ["🚀", "💪", "🚂", "☕", "💚", "🌟", "⚡", "🔥", "✅", "🏆"],
+            afternoonEmojis: ["💥", "⚡", "🚀", "🔥", "🏆", "💪", "👍", "✅", "🎉", "🤩"],
+            eveningNightEmojis: ["👍", "⭐", "💎", "🏆", "✅", "💪", "🌌", "✨", "🥇", "🔥"]
+        },
+        'Crypto': {
+            closers: ["Builders", "Peeps", "Fam", "Frens", "Fren", "Crew", "Squad", "Tribe", "Network",
+                      "Allies", "Partners", "Supporters", "Connections", "Circle", "Group", "Let's network",
+                      "Connect with me", "Let's engage", "Whats the ticker?"],
+            morningEmojis: ["💰", "📈", "🚀", "💎", "🪙", "🌅", "☕", "✨", "🔥", "⚡"],
+            afternoonEmojis: ["💥", "📊", "🚀", "💰", "🪙", "💎", "🌞", "🔥", "⚡", "📈"],
+            eveningNightEmojis: ["🌙", "💎", "📈", "💰", "🪙", "🌌", "⭐", "🚀", "🔥", "✨"]
+        },
+        'Pro': {
+            closers: ["Everyone", "Friends", "Friend", "Colleagues", "Team", "Community", "Partners", "Network",
+                      "Let's connect", "Drop a hi", "Say hello", "Follow along", "Let's vibe", "Let's chat",
+                      "Hit reply", "Tag a friend", "Reply below"],
+            morningEmojis: ["☕", "🌅", "😊", "🌻", "✨", "🌟", "🙏", "🌞", "🕊️", "🌈"],
+            afternoonEmojis: ["🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "💥", "🌬️"],
+            eveningNightEmojis: ["🌙", "💎", "📈", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉"]
+        }
+    };
+
     const accountConfigs = {
         'YanaHeat': {
-            closers: ["Love", "everyone", "Builders", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
-            morningEmojis: ["💕", "❤", "🖌️", "🦁", "🙏", "☕", "🌅", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟"],
-            afternoonEmojis: ["🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "💥", "🌬️", "🕑", "🌇", "🍹", "🏞️", "🌅"],
-            eveningNightEmojis: ["🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
+            closersExtras: ["Love", "Gain Train", "Let's connect"],
+            morningEmojisExtras: ["🖌️", "🦁"],
+            afternoonEmojisExtras: ["🪭", "💬"],
+            eveningNightEmojisExtras: ["🐐", "🕔"],
             timezoneOffset: 0
         },
         'YanaSn0w1': {
-            closers: ["Babe", "Hun", "Darling", "Fren", "Love", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
-            morningEmojis: ["🌹", "😽", "🎨", "☕", "🌅", "😊", "🌻", "✨", "💕", "❤", "🖌️", "🦁", "🙏", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟"],
-            afternoonEmojis: ["⚡", "🌈", "🌬️", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🕑", "🌇", "🍹", "🏞️", "🌅"],
-            eveningNightEmojis: ["🌌", "🥰", "⭐", "🤍", "🏹", "🦁", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
+            closersExtras: [],
+            morningEmojisExtras: ["🎨", "🌞"],
+            afternoonEmojisExtras: ["⚡", "🌈"],
+            eveningNightEmojisExtras: ["🌌", "🥰"],
             timezoneOffset: 0
         },
         'YenaFan01': {
-            closers: ["bro", "yo", "y'all", "Peeps", "Love", "everyone", "Builders", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
-            morningEmojis: ["🫶🏻", "🍑", "🌮", "☕", "🌅", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤"],
-            afternoonEmojis: ["🌻", "💦", "🐪", "⚡", "🌈", "🌪️", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🌬️", "🕑"],
-            eveningNightEmojis: ["🌆", "✨", "🍸", "🎇", "🌊", "🌜", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
-            timezoneOffset: +2
+            closersExtras: [],
+            morningEmojisExtras: ["🫶🏻", "🍑", "🌮"],
+            afternoonEmojisExtras: ["🌻", "💦", "🐪"],
+            eveningNightEmojisExtras: ["🌆", "✨", "🍸"],
+            timezoneOffset: 0
         },
         'YenaFan02': {
-            closers: ["everyone", "champs", "mates", "Builders", "Love", "Peeps", "Legend", "Family", "Fam", "Frens", "Fren", "Friends", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
-            morningEmojis: ["⚔️", "😊", "🌐", "☕", "🌅", "🌻", "✨", "🌹", "😽", "🎨", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤", "🖌️"],
-            afternoonEmojis: ["🤔", "🎉", "💬", "🔥", "🚀", "🪭", "💰", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "🌪️", "💥", "🌬️", "🕑", "🌇"],
-            eveningNightEmojis: ["💜", "🙏", "🏆", "🫡", "⏳", "🌒", "🐐", "🕔", "🌙", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉", "🌃", "🕯️", "🌠"],
+            closersExtras: [],
+            morningEmojisExtras: ["⚔️", "😊", "🌐"],
+            afternoonEmojisExtras: ["🤔", "🎉", "💬"],
+            eveningNightEmojisExtras: ["💜", "🙏", "🏆"],
             timezoneOffset: 0
         },
         'YenaFan03': {
-            closers: ["friends", "champ", "mate", "Buddies", "Legends", "Love", "everyone", "Builders", "Peeps", "Family", "Fam", "Frens", "Fren", "Friend", "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
-            morningEmojis: ["🌅", "🌞", "😘", "☕", "😊", "🌻", "✨", "🌹", "😽", "🎨", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "💕", "❤", "🖌️", "🦁"],
-            afternoonEmojis: ["😍", "❤️", "🌅", "🔥", "🚀", "🪭", "💰", "💬", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "🌪️", "💥", "🌬️", "🕑"],
-            eveningNightEmojis: ["🌆", "🌉", "🌙", "❣️", "🌃", "✨", "🐐", "🕔", "💎", "📈", "🥷", "🍆", "🫟", "💸", "💵", "🌌", "⭐", "🤍", "🥰", "🦉", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆"],
+            closersExtras: [],
+            morningEmojisExtras: ["🌅", "🌞", "😘"],
+            afternoonEmojisExtras: ["😍", "❤️", "🌅"],
+            eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
             timezoneOffset: -5
         }
         // Add more accounts here as needed
@@ -86,19 +124,16 @@
     }
 
     const defaults = {
+        mode: 'Flirty', // Default mode
         startDate: new Date().toISOString().split('T')[0],
         startTime: '23:59',
         intervalHours: 2,
         intervalMins: 30,
-        gmGreetings: ["Good morning", "GM", "Can I get a GM?"],
-        gaGreetings: ["Good afternoon", "GA", "Can I get a GA?"],
-        geGreetings: ["Good evening", "GE", "Can I get a GE?"],
-        gnGreetings: ["Good night", "GN", "Can I get a GN?"],
-        closers: [
-            "fam", "legend", "babe", "everyone", "friends",
-            "crew", "squad", "darling", "champ", "baby",
-            "unc", "bro", "mate", "hun", "dear", "Love", "Sweetheart", "Honey", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"
-        ],
+        gmGreetings: ["Good morning,", "GM", "Can I get a GM?"],
+        gaGreetings: ["Good afternoon,", "GA", "Can I get a GA?"],
+        geGreetings: ["Good evening,", "GE", "Can I get a GE?"],
+        gnGreetings: ["Good night,", "GN", "Can I get a GN?"],
+        closers: ["fam", "legend", "babe", "everyone", "friends", "crew", "squad", "darling", "champ", "baby", "unc", "bro", "mate", "hun", "dear", "Love", "Sweetheart", "Honey", "Sweetie", "Angel", "Beautiful", "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae", "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie", "Gorgeous", "Muffin", "Bear", "Pet"],
         morningEmojis: ["🌹", "😽", "☕", "🌅", "😊", "🌻", "✨", "💕", "❤", "🖌️", "🦁", "🙏", "🌞", "🍳", "🕊️", "🌈", "💐", "🦋", "🌟", "🎨"],
         afternoonEmojis: ["⚡", "💖", "🚀", "🌈", "🥳", "🔥", "🍀", "🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "💥", "🌬️", "🕑", "🌇", "🍹", "🏞️", "🌅"],
         eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫", "🌆", "✨", "🌌", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆", "🌑"],
@@ -107,12 +142,14 @@
         messages: []
     };
 
-    const resolvedConfig = getAccountConfig(currentUsername);
-    const closers = resolvedConfig.closers || defaults.closers;
-    const morningEmojis = resolvedConfig.morningEmojis || defaults.morningEmojis;
-    const afternoonEmojis = resolvedConfig.afternoonEmojis || defaults.afternoonEmojis;
-    const eveningNightEmojis = resolvedConfig.eveningNightEmojis || defaults.eveningNightEmojis;
-    const timezoneOffset = resolvedConfig.timezoneOffset || 0;
+    const resolvedAccountConfig = getAccountConfig(currentUsername);
+    const timezoneOffset = resolvedAccountConfig.timezoneOffset || 0;
+
+    let mode = GM_getValue(storagePrefix + 'mode', defaults.mode);
+    let closers = modes[mode].closers.concat(resolvedAccountConfig.closersExtras || []);
+    let morningEmojis = modes[mode].morningEmojis.concat(resolvedAccountConfig.morningEmojisExtras || []);
+    let afternoonEmojis = modes[mode].afternoonEmojis.concat(resolvedAccountConfig.afternoonEmojisExtras || []);
+    let eveningNightEmojis = modes[mode].eveningNightEmojis.concat(resolvedAccountConfig.eveningNightEmojisExtras || []);
 
     function waitForElement(selector, timeout = 5000) {
         return new Promise((resolve, reject) => {
@@ -474,6 +511,7 @@
     }
 
     function saveSettings() {
+        GM_setValue(storagePrefix + 'mode', mode);
         GM_setValue(storagePrefix + 'startDate', startDate);
         GM_setValue(storagePrefix + 'startTime', startTime);
         GM_setValue(storagePrefix + 'intervalHours', intervalHours);
@@ -503,6 +541,14 @@
         <h3 style="margin-top:0; color:#212529;">X Post Scheduler ${currentUsername ? '(' + currentUsername + ')' : ''}</h3>
         <div id="timerArea" style="margin-bottom:15px; color:#007bff; font-weight:bold;"></div>
         <div id="statusArea" style="margin-bottom:15px; padding:10px; background:#e9ecef; border-radius:4px; font-weight:bold;"></div>
+        <label style="display:block; margin-bottom:10px;">Mode:
+            <select id="modeSelect" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
+                <option value="Flirty" ${mode === 'Flirty' ? 'selected' : ''}>Flirty</option>
+                <option value="Boost" ${mode === 'Boost' ? 'selected' : ''}>Boost</option>
+                <option value="Crypto" ${mode === 'Crypto' ? 'selected' : ''}>Crypto</option>
+                <option value="Pro" ${mode === 'Pro' ? 'selected' : ''}>Pro</option>
+            </select>
+        </label>
         <label style="display:block; margin-bottom:10px;">Start Date:
             <input type="date" id="startDate" value="${startDate}" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
         </label>
@@ -600,6 +646,7 @@
     }
     updateMsgList();
 
+    const modeSelect = document.getElementById('modeSelect');
     const startDateInput = document.getElementById('startDate');
     const startTimeInput = document.getElementById('startTime');
     const intervalHoursInput = document.getElementById('intervalHours');
@@ -622,6 +669,19 @@
     let isScheduling = false;
     let isAutoQueueRunning = false;
 
+    modeSelect.addEventListener('change', () => {
+        mode = modeSelect.value;
+        closers = modes[mode].closers.concat(resolvedAccountConfig.closersExtras || []);
+        morningEmojis = modes[mode].morningEmojis.concat(resolvedAccountConfig.morningEmojisExtras || []);
+        afternoonEmojis = modes[mode].afternoonEmojis.concat(resolvedAccountConfig.afternoonEmojisExtras || []);
+        eveningNightEmojis = modes[mode].eveningNightEmojis.concat(resolvedAccountConfig.eveningNightEmojisExtras || []);
+        saveSettings();
+        if (regenerateOnAuto) {
+            messages = generateRandomMessages();
+            updateMsgList();
+        }
+    });
+
     generateRandomBtn.addEventListener('click', () => {
         if (isScheduling || isAutoQueueRunning) {
             logArea.innerHTML += 'Busy, cannot regenerate messages now.<br>';
@@ -639,7 +699,7 @@
             logArea.scrollTop = logArea.scrollHeight;
             return;
         }
-        ['startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'messages', 'nextAutoCheckTime'].forEach(key => {
+        ['mode', 'startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'messages', 'nextAutoCheckTime'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
@@ -688,14 +748,14 @@
         }
     });
 
-    document.getElementById('previewSlotsBtn').addEventListener('click', () => {
+    previewSlotsBtn.addEventListener('click', () => {
         const times = computeScheduleTimes(startDate, startTime, intervalHours, intervalMins, messages.length);
         const tableDiv = document.getElementById('slotsTable');
         tableDiv.innerHTML = '<h4 style="margin:0 0 5px; color:#495057;">Scheduled Slots:</h4><table style="width:100%; border-collapse:collapse;"><tr><th style="border:1px solid #dee2e6; padding:8px; background:#e9ecef;">Time</th><th style="border:1px solid #dee2e6; padding:8px; background:#e9ecef;">Message</th></tr>' +
             times.map((t, i) => `<tr><td style="border:1px solid #dee2e6; padding:8px;">${t.toLocaleString()}</td><td style="border:1px solid #dee2e6; padding:8px;">${messages[i]}</td></tr>`).join('') + '</table>';
     });
 
-    document.getElementById('checkQueueBtn').addEventListener('click', async () => {
+    checkQueueBtn.addEventListener('click', async () => {
         if (isScheduling || isAutoQueueRunning) {
             logArea.innerHTML += 'Busy, cannot check scheduled queue now.<br>';
             logArea.scrollTop = logArea.scrollHeight;
@@ -706,7 +766,7 @@
         logArea.scrollTop = logArea.scrollHeight;
     });
 
-    document.getElementById('scheduleAllBtn').addEventListener('click', async () => {
+    scheduleAllBtn.addEventListener('click', async () => {
         if (isScheduling || isAutoQueueRunning) {
             logArea.innerHTML += 'Already scheduling or auto-queue running.<br>';
             logArea.scrollTop = logArea.scrollHeight;
@@ -728,7 +788,7 @@
         isScheduling = false;
     });
 
-    document.getElementById('closePanel').addEventListener('click', () => {
+    closePanelBtn.addEventListener('click', () => {
         panel.style.display = 'none';
     });
 
@@ -849,6 +909,7 @@
                 currentUsername = newHref;
                 const newPrefix = `xSched_${newHref}_`;
                 // Reload settings for new account
+                mode = GM_getValue(newPrefix + 'mode', defaults.mode);
                 startDate = GM_getValue(newPrefix + 'startDate', getLocalDateStr());
                 startTime = GM_getValue(newPrefix + 'startTime', defaults.startTime);
                 intervalHours = GM_getValue(newPrefix + 'intervalHours', defaults.intervalHours);
@@ -856,7 +917,14 @@
                 maxEmojis = GM_getValue(newPrefix + 'maxEmojis', defaults.maxEmojis);
                 regenerateOnAuto = GM_getValue(newPrefix + 'regenerateOnAuto', defaults.regenerateOnAuto);
                 messages = GM_getValue(newPrefix + 'messages', generateRandomMessages());
+                // Update closers/emojis based on new mode and account
+                const newAccountConfig = getAccountConfig(currentUsername);
+                closers = modes[mode].closers.concat(newAccountConfig.closersExtras || []);
+                morningEmojis = modes[mode].morningEmojis.concat(newAccountConfig.morningEmojisExtras || []);
+                afternoonEmojis = modes[mode].afternoonEmojis.concat(newAccountConfig.afternoonEmojisExtras || []);
+                eveningNightEmojis = modes[mode].eveningNightEmojis.concat(newAccountConfig.eveningNightEmojisExtras || []);
                 // Update panel elements
+                document.getElementById('modeSelect').value = mode;
                 document.getElementById('startDate').value = startDate;
                 document.getElementById('startTime').value = startTime;
                 document.getElementById('intervalHours').value = intervalHours;

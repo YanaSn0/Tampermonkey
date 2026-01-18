@@ -30,7 +30,7 @@
 - 1.1.0 added: If not FB 14 then click home, click top post, scroll to bottom, follow verified only.
   
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler") ⬅️
-<img width="1600" height="900" alt="firefox_s43WCjd2cB" src="https://github.com/user-attachments/assets/bd3eb46e-df82-477f-8e89-339f81f5a458" />
+<img width="1600" height="852" alt="YanaHeat_firefox_stCMgofqIV" src="https://github.com/user-attachments/assets/91fe1f6d-b67a-4674-b3ee-578d3e058202" />
 
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.
 - 1.2 fixed: No more duplicate messages.

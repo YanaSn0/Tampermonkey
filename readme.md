@@ -28,6 +28,12 @@
 
 # Description
 - 1.1.0 added: If not FB 14 then click home, click top post, scroll to bottom, follow verified only.
+- 1.1.0 bugs: Out of ram screens in a VM? possibly from logging and caching so much.
+- Only does 1 top post from home. Needs to be able to move each one to the offset and click it when reaches top so it can do 14 every time.
+- Does not go to verified when timer 0 sometimes, if the post did not contain someone to follow?
+- Does not need to go to home once found 14 can just stop.
+- Needs to wait 15 and set timer if got rate limit message or the max day follow message.
+- Unfollow not working.
   
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler") ⬅️
 <img width="1600" height="852" alt="YanaHeat_firefox_stCMgofqIV" src="https://github.com/user-attachments/assets/91fe1f6d-b67a-4674-b3ee-578d3e058202" />

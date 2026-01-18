@@ -42,5 +42,6 @@
 - 1.8 fixed: Tightened logic to prevent going to home and entering in the composer after 4.
 - 1.9 added: Regenerates each time if checked. Added more emoji and closer.
 - 1.10 fixed: Default to 0 to 2 emoji and regenerate new to true. Settings stay set.
+- 1.11 added: Can now set your vibe to Flirty, Boost, Crypto and Pro.
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️

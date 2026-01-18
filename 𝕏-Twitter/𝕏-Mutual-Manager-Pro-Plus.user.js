@@ -545,7 +545,6 @@
       if (remaining <= 0) {
         setCooldownEnd(0);
         setCycleFollows(0);
-        localStorage.setItem('um_uf_count', '0');
         setNeedThreadFallback(false);
         if (verifiedUrl) {
           window.location.href = verifiedUrl;
@@ -566,20 +565,66 @@
     let processed = new Set();
     let total = 0;
     let actionedInPeriod = 0;
+    let remainingTime = 0;
+    let hasActioned = false;
+    let timerInt = null;
+    let periodStart = null;
 
     const storagePrefix = 'um_uf_';
 
     function loadState() {
+      periodStart = parseInt(localStorage.getItem(storagePrefix + 'periodStart') || '0') || null;
       actionedInPeriod = parseInt(localStorage.getItem(storagePrefix + 'count') || '0');
-      const end = getCooldownEnd();
-      if (end > Date.now()) {
-        actionedInPeriod = UF_MAX_PER_PERIOD;
+      if (periodStart) {
+        const elapsed = Date.now() - periodStart;
+        if (elapsed < ACTION_CD) {
+          remainingTime = Math.floor((ACTION_CD - elapsed) / 1000);
+          startTimerFrom(remainingTime);
+        } else {
+          periodStart = null;
+          actionedInPeriod = 0;
+        }
       }
       scanCountSpan.textContent = `${total}/${SC_MAX_UNFOLLOW}`;
     }
 
     function saveState() {
+      if (periodStart) localStorage.setItem(storagePrefix + 'periodStart', periodStart);
+      else localStorage.removeItem(storagePrefix + 'periodStart');
       localStorage.setItem(storagePrefix + 'count', actionedInPeriod);
+    }
+
+    function startTimerFrom(sec) {
+      remainingTime = sec;
+      hasActioned = true;
+      if (timerInt) clearInterval(timerInt);
+      timerInt = setInterval(() => {
+        remainingTime--;
+        const h = String(Math.floor(remainingTime / 3600)).padStart(2, '0');
+        const m = String(Math.floor((remainingTime % 3600) / 60)).padStart(2, '0');
+        const s = String(remainingTime % 60).padStart(2, '0');
+        scanTimerSpan.textContent = `${h}:${m}:${s}`;
+        if (remainingTime <= 0) {
+          clearInterval(timerInt);
+          periodStart = null;
+          actionedInPeriod = 0;
+          hasActioned = false;
+          saveState();
+          scanTimerSpan.textContent = '00:00:00';
+          setTimeout(() => {
+            if (startBtn.textContent === 'Start') startBtn.click();
+          }, 1000);
+        }
+      }, 1000);
+    }
+
+    function startNewTimer() {
+      if (timerInt) clearInterval(timerInt);
+      periodStart = Date.now();
+      remainingTime = Math.floor(ACTION_CD / 1000);
+      hasActioned = true;
+      saveState();
+      startTimerFrom(remainingTime);
     }
 
     async function processBatch() {
@@ -633,19 +678,10 @@
           confirm.click();
           cell.style.border = '2px solid red';
           actionedInPeriod++;
+          if (actionedInPeriod === 1) startNewTimer();
           saveState();
         } else {
-          if (isRateLimited()) {
-            if (!getCooldownEnd()) {
-              const end = Date.now() + ACTION_CD;
-              setCooldownEnd(end);
-              startGlobalCooldownTicker();
-            }
-            actionedInPeriod = UF_MAX_PER_PERIOD;
-            cell.style.border = '2px solid orange';
-            running = false;
-            break;
-          }
+          if (isRateLimited()) startNewTimer();
           cell.style.border = '2px solid orange';
         }
 
@@ -810,8 +846,8 @@
             setCooldownEnd(end);
             startGlobalCooldownTicker();
           }
-          setCycleFollows(fbMaxPerPeriod);
           cell.style.border = '2px solid orange';
+          running = false;
           return proc;
         }
 
@@ -851,7 +887,7 @@
 
       setNeedThreadFallback(true);
       await new Promise(r => setTimeout(r, 3000));
-      running = false;
+      window.location.href = 'https://x.com/home';
     }
 
     updateUI();
@@ -874,8 +910,8 @@
               continue;
             }
             if (cycleFollows >= fbMaxPerPeriod) {
-              await finishPage();
-              return;
+              running = false;
+              break;
             }
             const proc = await processBatch();
             scanSincePause += proc;

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro-Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1.1
+// @version      1.1.3
 // @author       YanaHeat
 // @match        https://x.com/*
 // @grant        none
@@ -851,7 +851,7 @@
 
       setNeedThreadFallback(true);
       await new Promise(r => setTimeout(r, 3000));
-      window.location.href = 'https://x.com/home';
+      running = false;
     }
 
     updateUI();

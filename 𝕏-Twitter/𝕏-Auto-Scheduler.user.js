@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.11
+// @version      1.12
 // @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -36,6 +36,16 @@
     let currentUsername = href;
 
     const storagePrefix = currentUsername ? `xSched_${currentUsername}_` : 'xSched_anon_';
+
+    const HOST = "http://192.168.1.67:11434";
+    const MODEL = "gemma3:4b";
+
+    const basePrompts = {
+        'Flirty': "Generate one short, simple flirty sentence. No emojis, no hashtags, no lists, no explanations. One sentence only.",
+        'Boost': "Generate one short, simple sentence about gaining followers on X. No emojis, no hashtags, no lists, no explanations. One sentence only.",
+        'Crypto': "Generate one short, simple sentence about networking in crypto. No emojis, no hashtags, no lists, no explanations. One sentence only.",
+        'Pro': "Generate one short, simple sentence about professional networking. No emojis, no hashtags, no lists, no explanations. One sentence only."
+    };
 
     const modes = {
         'Flirty': {
@@ -109,7 +119,7 @@
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: -5
+            timezoneOffset: 0
         }
         // Add more accounts here as needed
     };
@@ -139,6 +149,7 @@
         eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫", "🌆", "✨", "🌌", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆", "🌑"],
         maxEmojis: 'random',
         regenerateOnAuto: true,
+        useAiClosers: false,
         messages: []
     };
 
@@ -146,10 +157,37 @@
     const timezoneOffset = resolvedAccountConfig.timezoneOffset || 0;
 
     let mode = GM_getValue(storagePrefix + 'mode', defaults.mode);
+    let useAiClosers = GM_getValue(storagePrefix + 'useAiClosers', defaults.useAiClosers);
     let closers = modes[mode].closers.concat(resolvedAccountConfig.closersExtras || []);
     let morningEmojis = modes[mode].morningEmojis.concat(resolvedAccountConfig.morningEmojisExtras || []);
     let afternoonEmojis = modes[mode].afternoonEmojis.concat(resolvedAccountConfig.afternoonEmojisExtras || []);
     let eveningNightEmojis = modes[mode].eveningNightEmojis.concat(resolvedAccountConfig.eveningNightEmojisExtras || []);
+
+    async function generateCloser() {
+        const seed = Math.floor(Math.random() * 1000);
+        const payload = {
+            "model": MODEL,
+            "prompt": `${basePrompts[mode]}\nVariation seed: ${seed}`,
+            "stream": false
+        };
+        try {
+            const response = await fetch(`${HOST}/api/generate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                // timeout: 10000 // fetch doesn't have timeout, handle separately if needed
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data.response.trim();
+        } catch (e) {
+            console.error('Error generating closer:', e);
+            // Fallback to static closer
+            return closers[Math.floor(Math.random() * closers.length)];
+        }
+    }
 
     function waitForElement(selector, timeout = 5000) {
         return new Promise((resolve, reject) => {
@@ -453,7 +491,7 @@
         }
     }
 
-    function generateRandomMessages() {
+    async function generateRandomMessages() {
         const groups = [
             {greetings: defaults.gmGreetings, emojiPool: morningEmojis, count: 2},
             {greetings: defaults.gaGreetings, emojiPool: afternoonEmojis, count: 2},
@@ -461,7 +499,7 @@
             {greetings: defaults.gnGreetings, emojiPool: eveningNightEmojis, count: 2}
         ];
         const messagesLocal = [];
-        groups.forEach(group => {
+        for (const group of groups) {
             let usedGreetings = [];
             for (let i = 0; i < group.count; i++) {
                 let greeting;
@@ -473,7 +511,11 @@
                 const addCloser = !greeting.startsWith("Can I get a");
                 let closer = '';
                 if (addCloser) {
-                    closer = closers[Math.floor(Math.random() * closers.length)];
+                    if (useAiClosers && Math.random() < 0.5) {
+                        closer = await generateCloser();
+                    } else {
+                        closer = closers[Math.floor(Math.random() * closers.length)];
+                    }
                 }
                 let numEmojis;
                 if (maxEmojis === 'random') {
@@ -491,7 +533,7 @@
                     : `${greeting}${emojisStr ? ' ' + emojisStr : ''}`;
                 messagesLocal.push(message);
             }
-        });
+        }
         return messagesLocal;
     }
 
@@ -507,7 +549,7 @@
     startDate = getLocalDateStr();
 
     if (!Array.isArray(messages) || messages.length === 0) {
-        messages = generateRandomMessages();
+        messages = await generateRandomMessages();
     }
 
     function saveSettings() {
@@ -518,6 +560,7 @@
         GM_setValue(storagePrefix + 'intervalMins', intervalMins);
         GM_setValue(storagePrefix + 'maxEmojis', maxEmojis);
         GM_setValue(storagePrefix + 'regenerateOnAuto', regenerateOnAuto);
+        GM_setValue(storagePrefix + 'useAiClosers', useAiClosers);
         GM_setValue(storagePrefix + 'messages', messages);
     }
 
@@ -548,6 +591,9 @@
                 <option value="Crypto" ${mode === 'Crypto' ? 'selected' : ''}>Crypto</option>
                 <option value="Pro" ${mode === 'Pro' ? 'selected' : ''}>Pro</option>
             </select>
+        </label>
+        <label style="display:block; margin-bottom:10px;">
+            <input type="checkbox" id="useAiClosers" ${useAiClosers ? 'checked' : ''}> Use AI-generated closers (mixed with originals)
         </label>
         <label style="display:block; margin-bottom:10px;">Start Date:
             <input type="date" id="startDate" value="${startDate}" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
@@ -647,6 +693,7 @@
     updateMsgList();
 
     const modeSelect = document.getElementById('modeSelect');
+    const useAiClosersCheckbox = document.getElementById('useAiClosers');
     const startDateInput = document.getElementById('startDate');
     const startTimeInput = document.getElementById('startTime');
     const intervalHoursInput = document.getElementById('intervalHours');
@@ -676,19 +723,20 @@
         afternoonEmojis = modes[mode].afternoonEmojis.concat(resolvedAccountConfig.afternoonEmojisExtras || []);
         eveningNightEmojis = modes[mode].eveningNightEmojis.concat(resolvedAccountConfig.eveningNightEmojisExtras || []);
         saveSettings();
-        if (regenerateOnAuto) {
-            messages = generateRandomMessages();
-            updateMsgList();
-        }
     });
 
-    generateRandomBtn.addEventListener('click', () => {
+    useAiClosersCheckbox.addEventListener('change', () => {
+        useAiClosers = useAiClosersCheckbox.checked;
+        saveSettings();
+    });
+
+    generateRandomBtn.addEventListener('click', async () => {
         if (isScheduling || isAutoQueueRunning) {
             logArea.innerHTML += 'Busy, cannot regenerate messages now.<br>';
             logArea.scrollTop = logArea.scrollHeight;
             return;
         }
-        messages = generateRandomMessages();
+        messages = await generateRandomMessages();
         saveSettings();
         updateMsgList();
     });
@@ -699,7 +747,7 @@
             logArea.scrollTop = logArea.scrollHeight;
             return;
         }
-        ['mode', 'startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'messages', 'nextAutoCheckTime'].forEach(key => {
+        ['mode', 'startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'useAiClosers', 'messages', 'nextAutoCheckTime'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
@@ -825,7 +873,7 @@
             logArea.innerHTML += 'Queue is empty, auto-generating and scheduling 8 posts...<br>';
             logArea.scrollTop = logArea.scrollHeight;
             if (regenerateOnAuto) {
-                messages = generateRandomMessages();
+                messages = await generateRandomMessages();
             }
             saveSettings();
             updateMsgList();
@@ -910,13 +958,14 @@
                 const newPrefix = `xSched_${newHref}_`;
                 // Reload settings for new account
                 mode = GM_getValue(newPrefix + 'mode', defaults.mode);
+                useAiClosers = GM_getValue(newPrefix + 'useAiClosers', defaults.useAiClosers);
                 startDate = GM_getValue(newPrefix + 'startDate', getLocalDateStr());
                 startTime = GM_getValue(newPrefix + 'startTime', defaults.startTime);
                 intervalHours = GM_getValue(newPrefix + 'intervalHours', defaults.intervalHours);
                 intervalMins = GM_getValue(newPrefix + 'intervalMins', defaults.intervalMins);
                 maxEmojis = GM_getValue(newPrefix + 'maxEmojis', defaults.maxEmojis);
                 regenerateOnAuto = GM_getValue(newPrefix + 'regenerateOnAuto', defaults.regenerateOnAuto);
-                messages = GM_getValue(newPrefix + 'messages', generateRandomMessages());
+                messages = GM_getValue(newPrefix + 'messages', await generateRandomMessages());
                 // Update closers/emojis based on new mode and account
                 const newAccountConfig = getAccountConfig(currentUsername);
                 closers = modes[mode].closers.concat(newAccountConfig.closersExtras || []);
@@ -925,6 +974,7 @@
                 eveningNightEmojis = modes[mode].eveningNightEmojis.concat(newAccountConfig.eveningNightEmojisExtras || []);
                 // Update panel elements
                 document.getElementById('modeSelect').value = mode;
+                document.getElementById('useAiClosers').checked = useAiClosers;
                 document.getElementById('startDate').value = startDate;
                 document.getElementById('startTime').value = startTime;
                 document.getElementById('intervalHours').value = intervalHours;

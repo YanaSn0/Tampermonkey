@@ -37,7 +37,7 @@
 - 1.1.1 un tested, attempt to fix all bugs at once.
   
 # [𝕏-Auto-Scheduler](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Auto-Scheduler.user.js "𝕏-Auto-Scheduler") ⬅️
-<img width="1600" height="852" alt="YanaHeat_firefox_stCMgofqIV" src="https://github.com/user-attachments/assets/91fe1f6d-b67a-4674-b3ee-578d3e058202" />
+<img width="1600" height="852" alt="YanaHeat_firefox_VLPdcQRVv6" src="https://github.com/user-attachments/assets/75b6a2c5-6b4a-462d-80b4-2da598ad7994" />
 
 - 1.1 fixed: Set to current date while loading by default. Add generate random post button.
 - 1.2 fixed: No more duplicate messages.
@@ -50,5 +50,6 @@
 - 1.9 added: Regenerates each time if checked. Added more emoji and closer.
 - 1.10 fixed: Default to 0 to 2 emoji and regenerate new to true. Settings stay set.
 - 1.11 added: Can now set your vibe to Flirty, Boost, Crypto and Pro.
+- 1.12 added: Generate with AI toggle. Requires ollama and gemma3:4b over LAN.
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️

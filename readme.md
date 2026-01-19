@@ -50,6 +50,6 @@
 - 1.9 added: Regenerates each time if checked. Added more emoji and closer.
 - 1.10 fixed: Default to 0 to 2 emoji and regenerate new to true. Settings stay set.
 - 1.11 added: Can now set your vibe to Flirty, Boost, Crypto and Pro.
-- 1.12 added: Generate with AI toggle. Requires ollama and gemma3:4b over LAN.
+- 1.12 added: Generate with AI toggle.
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️

@@ -22,6 +22,7 @@
 
 ## Fixes
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.
+- Currently doesn't work for other language than English 12 hour format.
 
 # [𝕏-Mutual-Manager-Pro-Plus](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro-Plus.user.js "𝕏-Mutual-Manager-Pro-Plus") ⬅️
 <img width="1600" height="900" alt="YanaHeat_firefox_LHJ1ZJmZ6e" src="https://github.com/user-attachments/assets/123c2c87-e73f-4ea3-bea0-dd90d8078b0a" />

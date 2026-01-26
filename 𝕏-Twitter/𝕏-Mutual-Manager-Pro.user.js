@@ -30,7 +30,7 @@
 
   const UF_MAX_PER_PERIOD = 150;
   let ACTION_CD = fbCooldownMinutes * 60 * 1000;
-  const SC_MAX_UNFOLLOW = 30000;
+  const SC_MAX_UNFOLLOW = 40000;
 
   const FB_SCAN_MIN = 50;
   const SC_INIT = 100;

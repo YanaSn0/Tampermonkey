@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Mutual-Manager-Pro
 // @namespace    http://tampermonkey.net/
-// @version      1.0.3
+// @version      1.0.1
 // @author       YanaHeat
 // @match        https://x.com/*follow*
 // @grant        none
@@ -93,7 +93,6 @@
       name.toLowerCase().includes(k) || username.toLowerCase().includes(k) || bio.toLowerCase().includes(k)
     );
 
-    // Improved verified badge detection
     const verifiedBadge = cell.querySelector('svg[aria-label="Verified account"]');
     const isVerified = !!verifiedBadge;
 
@@ -499,9 +498,7 @@
     const storedUnfollowUnv = localStorage.getItem('um_unfollow_unverified');
     unfollowUnvCheckbox.checked = storedUnfollowUnv === 'true';
     unfollowUnvCheckbox.onchange = () => {
-      const val = unfollowUnvCheckbox.checked ? 'true' : 'false';
-      localStorage.setItem('um_unfollow_unverified', val);
-      console.log('Unfollow unverified setting changed to:', val);
+      localStorage.setItem('um_unfollow_unverified', unfollowUnvCheckbox.checked ? 'true' : 'false');
     };
     const unfollowUnvLabel = document.createElement('label');
     unfollowUnvLabel.htmlFor = 'unfollow-unv';
@@ -518,12 +515,7 @@
   let paused = true;
 
   if (mode === 'unfollow') {
-    let UNFOLLOW_UNVERIFIED = localStorage.getItem('um_unfollow_unverified') === 'true';
-
-    // Create a function to get the current setting
-    function getUnfollowUnverified() {
-      return localStorage.getItem('um_unfollow_unverified') === 'true';
-    }
+    const UNFOLLOW_UNVERIFIED = localStorage.getItem('um_unfollow_unverified') === 'true';
 
     modeLine.textContent = 'Mode: Unfollow non-mutuals + bots';
     actionLine.innerHTML = `Unfollows: <span id="action-count">0/${UF_MAX_PER_PERIOD}</span><span id="timer"></span>`;
@@ -681,12 +673,7 @@
         let reasons = [];
         if (!isMutual) reasons.push('non-mutual');
         reasons = reasons.concat(botReasons);
-        
-        // Check if we should unfollow unverified accounts
-        const unfollowUnverifiedEnabled = getUnfollowUnverified();
-        if (unfollowUnverifiedEnabled && !isVerified) {
-          reasons.push('unverified');
-        }
+        if (UNFOLLOW_UNVERIFIED && !isVerified) reasons.push('unverified');
 
         if (reasons.length === 0) {
           cell.style.border = '2px solid green';

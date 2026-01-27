@@ -22,6 +22,7 @@
 
 ## Fixes
 - 1.0.1 fixed: FB stays at 14. Can change FB CD from UI.
+- 1.0.2 added: Check box to unfollow all unverified.
 - Currently doesn't work for other language than English 12 hour format.
 
 # [𝕏-Mutual-Manager-Pro-Plus](https://github.com/YanaSn0w1/Tampermonkey/blob/main/%F0%9D%95%8F-Twitter/%F0%9D%95%8F-Mutual-Manager-Pro-Plus.user.js "𝕏-Mutual-Manager-Pro-Plus") ⬅️

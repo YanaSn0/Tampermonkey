@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.12
+// @version      1.13
 // @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -37,89 +37,197 @@
 
     const storagePrefix = currentUsername ? `xSched_${currentUsername}_` : 'xSched_anon_';
 
-    const HOST = "http://192.168.1.67:11434";
-    const MODEL = "gemma3:4b";
-
-    const basePrompts = {
-        'Flirty': "Generate one short, simple flirty sentence. No emojis, no hashtags, no lists, no explanations. One sentence only.",
-        'Boost': "Generate one short, simple sentence about gaining followers on X. No emojis, no hashtags, no lists, no explanations. One sentence only.",
-        'Crypto': "Generate one short, simple sentence about networking in crypto. No emojis, no hashtags, no lists, no explanations. One sentence only.",
-        'Pro': "Generate one short, simple sentence about professional networking. No emojis, no hashtags, no lists, no explanations. One sentence only."
-    };
-
     const modes = {
         'Flirty': {
-            closers: ["Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful",
-                      "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae",
-                      "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie",
-                      "Gorgeous", "Muffin"],
+            closers: [
+                "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful",
+                "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae",
+                "My Love", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie",
+                "Gorgeous", "Muffin"
+            ],
             morningEmojis: ["💕", "❤", "😘", "😍", "🌹", "😽", "💋", "🥰", "💖", "😊"],
             afternoonEmojis: ["🔥", "💦", "😎", "💋", "🌹", "😘", "💖", "🥰", "😍", "🌞"],
             eveningNightEmojis: ["🌙", "💋", "🥂", "😘", "💖", "🥰", "🌌", "⭐", "🤍", "😍"]
         },
+
         'Boost': {
-            closers: ["Say just Hello", "Gain 70 followers", "Turn on notifications", "Active accounts?", "Grow 101 Organic Followers",
-                      "We follow you.", "Who needs 500 followrs", "We will connect fast", "Gain 200 foIIowers is easy!!!", "Say Hi, we follow you instantly",
-                      "God bless reply guys", "Thank you God for the boost", "Thank you God for Consistency", "TY, appreciate the follow.",
-                      "Follow backs guaranteed", "Active people only", "Gain Train rolling", "We’ll help you reach 10k+", "Looking to grow your handle?", "Normalize Following Small Accounts",
-                      "Keep on crankin' follows"],
+            closers: [
+                "Just say Hello. Gain 59+ Grinders",
+                "Just say Hi. Gain 39 +",
+                "Drop a reply. Gain 101 + Actives",
+                "Turn on my notifications for huge gains.",
+                "Any active accounts?",
+                "Grow 101+ Organics",
+                "Let's Gain 87+ actives.",
+                "Who needs 500 plus actives?",
+                "We will connect fast",
+                "Gain 200 plus easy!",
+                "Say Hi, we connect you instantly",
+                "God bless reply guys",
+                "Thank you God for the boost",
+                "Thank you God for Consistency",
+                "TY God, appreciate the foll0w.",
+                "Can we b00st you?",
+                "I follow from the RT section.",
+                "Support small accounts",
+                "Gain Train",
+                "We’ll help you reach 10k+",
+                "Looking to grow your handle?",
+                "Normalize supporting Small Accounts",
+                "Keep on crankin' massive gains.",
+                "If you see this, kindly repost.",
+
+                // additions, same vibe
+                "Drop a Hi, gain 77+ actives",
+                "Active crew, check in",
+                "Let’s run gains today",
+                "Push for 150+ actives",
+                "Who’s boosting today?",
+                "Engage for clean gains",
+                "Run it up, gain style",
+                "Small accounts matter",
+                "Boost wave incoming",
+                "Let’s spark 200+ reach",
+                "Reply once, gain plenty",
+                "Organic gains only",
+                "Keep the gains rolling",
+                "Big energy, big gains",
+                "Actives check‑in time",
+                "Push your reach today",
+                "Let’s build momentum",
+                "Drop a word, gain more",
+                "Steady gains all day",
+                "Boost mode activated"
+            ],
             morningEmojis: ["🚀", "💪", "🚂", "☕", "💚", "🌟", "⚡", "🔥", "✅", "🏆"],
             afternoonEmojis: ["💥", "⚡", "🚀", "🔥", "🏆", "💪", "👍", "✅", "🎉", "🤩"],
             eveningNightEmojis: ["👍", "⭐", "💎", "🏆", "✅", "💪", "🌌", "✨", "🥇", "🔥"]
         },
+
         'Crypto': {
-            closers: ["Builders", "Peeps", "Fam", "Frens", "Fren", "Crew", "Squad", "Tribe", "Network",
-                      "Allies", "Partners", "Supporters", "Connections", "Circle", "Group", "Let's network",
-                      "Connect with me", "Let's engage", "Whats the ticker?"],
+            closers: [
+                "Builders", "Peeps", "Fam", "Frens", "Fren", "Crew", "Squad", "Tribe", "Network",
+                "Allies", "Partners", "Supporters", "Connections", "Circle", "Group", "Let's network",
+                "Connect with me", "Let's engage", "Whats the ticker?",
+
+                // additions, same lane, no “tag your dev”
+                "Drop your ticker",
+                "Share your alpha",
+                "Who’s building today?",
+                "Builders tap in",
+                "On‑chain crew here",
+                "Web3 fam check in",
+                "Show your chart",
+                "What are you building?",
+                "Roll call for builders",
+                "Any new projects today?"
+            ],
             morningEmojis: ["💰", "📈", "🚀", "💎", "🪙", "🌅", "☕", "✨", "🔥", "⚡"],
             afternoonEmojis: ["💥", "📊", "🚀", "💰", "🪙", "💎", "🌞", "🔥", "⚡", "📈"],
             eveningNightEmojis: ["🌙", "💎", "📈", "💰", "🪙", "🌌", "⭐", "🚀", "🔥", "✨"]
         },
+
         'Pro': {
-            closers: ["Everyone", "Friends", "Friend", "Colleagues", "Team", "Community", "Partners", "Network",
-                      "Let's connect", "Drop a hi", "Say hello", "Follow along", "Let's vibe", "Let's chat",
-                      "Hit reply", "Tag a friend", "Reply below"],
+            closers: [
+                "Everyone", "Friends", "Friend", "Colleagues", "Team", "Community", "Partners", "Network",
+                "Let's connect", "Drop a hi", "Say hello", "Follow along", "Let's vibe", "Let's chat",
+                "Hit reply", "Tag a friend", "Reply below",
+
+                // additions, same tone
+                "Share your thoughts",
+                "Join the conversation",
+                "Let’s keep learning",
+                "Stay inspired",
+                "Keep growing",
+                "Add your take",
+                "What do you think?",
+                "Chime in",
+                "Your turn"
+            ],
             morningEmojis: ["☕", "🌅", "😊", "🌻", "✨", "🌟", "🙏", "🌞", "🕊️", "🌈"],
             afternoonEmojis: ["🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "💥", "🌬️"],
             eveningNightEmojis: ["🌙", "💎", "📈", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉"]
+        },
+
+        'Cute': {
+            closers: [
+                "Little bean", "Tiny panda", "Sweet bunny", "Happy puppy", "Sleepy kitten",
+                "Tiny sprout", "Soft peach", "Berry sweet", "Sweet muffin", "Cookie crumb",
+                "Cherry drop", "Petal heart", "Poppy bloom", "Daisy face", "Lucky clover",
+                "Soft sparkle", "Little bubble", "Tiny nugget", "Cute button", "Shining star"
+            ],
+            morningEmojis: ["🌸", "🐣", "☀️", "🐻", "🐰", "🍓", "😊", "🌼", "✨", "🧸"],
+            afternoonEmojis: ["🌤️", "🐱", "🐶", "🍉", "🍪", "🌈", "😄", "🫧", "💖", "🌻"],
+            eveningNightEmojis: ["🌙", "🧸", "⭐", "🌌", "🐱", "🐰", "💤", "✨", "🤍", "🌟"]
+        },
+
+        'Zen': {
+            closers: [
+                "Stay calm", "Stay soft", "Breathe easy", "Find your center", "Stay grounded",
+                "Move gently", "Stay present", "Keep it light", "Soft focus", "Quiet mind",
+                "Gentle pace", "Slow and steady", "Calm energy", "Soft landing", "Peaceful night",
+                "Easy morning", "Soft reset", "Quiet moment", "Steady heart", "Calm and clear"
+            ],
+            morningEmojis: ["🌅", "☕", "🧘", "🍃", "🌿", "🌞", "🕊️", "💧", "✨", "🌻"],
+            afternoonEmojis: ["🌤️", "🍃", "🌳", "🧘", "💭", "☀️", "🌈", "💧", "✨", "😌"],
+            eveningNightEmojis: ["🌙", "🧘", "🌌", "⭐", "🕯️", "💤", "🍃", "🤍", "✨", "🌊"]
+        },
+
+        'Hype': {
+            closers: [
+                "Full send", "Big energy", "We go again", "Run it up", "Locked in",
+                "All gas", "No brakes", "Max volume", "Turn it up", "We move",
+                "No limits", "All in", "Let’s cook", "Turn the dial", "Push the line",
+                "No slowing down", "Keep it rolling", "Stay loud", "Stay winning", "We’re live"
+            ],
+            morningEmojis: ["⚡", "🔥", "🚀", "🌞", "💪", "🏁", "🎧", "🌟", "✅", "🏆"],
+            afternoonEmojis: ["💥", "🔥", "🚀", "⚡", "😎", "🏆", "🎉", "📈", "🤘", "⭐"],
+            eveningNightEmojis: ["🌙", "🔥", "🌌", "⭐", "⚡", "🏆", "🎇", "🎆", "💣", "🚀"]
         }
     };
 
     const accountConfigs = {
         'YanaHeat': {
-            closersExtras: ["Love", "Gain Train", "Let's connect"],
+            closersExtras: [],
             morningEmojisExtras: ["🖌️", "🦁"],
             afternoonEmojisExtras: ["🪭", "💬"],
             eveningNightEmojisExtras: ["🐐", "🕔"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaSn0w1': {
             closersExtras: [],
             morningEmojisExtras: ["🎨", "🌞"],
             afternoonEmojisExtras: ["⚡", "🌈"],
             eveningNightEmojisExtras: ["🌌", "🥰"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
-        'YenaFan01': {
+        'YanaFan01': {
             closersExtras: [],
             morningEmojisExtras: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojisExtras: ["🌻", "💦", "🐪"],
             eveningNightEmojisExtras: ["🌆", "✨", "🍸"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
-        'YenaFan02': {
+        'YanaFan02': {
             closersExtras: [],
             morningEmojisExtras: ["⚔️", "😊", "🌐"],
             afternoonEmojisExtras: ["🤔", "🎉", "💬"],
             eveningNightEmojisExtras: ["💜", "🙏", "🏆"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
-        'YenaFan03': {
+        'YanaFan03': {
             closersExtras: [],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: 0
+            timezoneOffset: -3
+        },
+        'YanaFan04': {
+            closersExtras: [],
+            morningEmojisExtras: ["🌅", "🌞", "😘"],
+            afternoonEmojisExtras: ["😍", "❤️", "🌅"],
+            eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
+            timezoneOffset: -3
         }
         // Add more accounts here as needed
     };
@@ -134,7 +242,7 @@
     }
 
     const defaults = {
-        mode: 'Flirty', // Default mode
+        mode: 'Hype', // Default mode
         startDate: new Date().toISOString().split('T')[0],
         startTime: '23:59',
         intervalHours: 2,
@@ -149,7 +257,6 @@
         eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫", "🌆", "✨", "🌌", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆", "🌑"],
         maxEmojis: 'random',
         regenerateOnAuto: true,
-        useAiClosers: false,
         messages: []
     };
 
@@ -157,37 +264,10 @@
     const timezoneOffset = resolvedAccountConfig.timezoneOffset || 0;
 
     let mode = GM_getValue(storagePrefix + 'mode', defaults.mode);
-    let useAiClosers = GM_getValue(storagePrefix + 'useAiClosers', defaults.useAiClosers);
     let closers = modes[mode].closers.concat(resolvedAccountConfig.closersExtras || []);
     let morningEmojis = modes[mode].morningEmojis.concat(resolvedAccountConfig.morningEmojisExtras || []);
     let afternoonEmojis = modes[mode].afternoonEmojis.concat(resolvedAccountConfig.afternoonEmojisExtras || []);
     let eveningNightEmojis = modes[mode].eveningNightEmojis.concat(resolvedAccountConfig.eveningNightEmojisExtras || []);
-
-    async function generateCloser() {
-        const seed = Math.floor(Math.random() * 1000);
-        const payload = {
-            "model": MODEL,
-            "prompt": `${basePrompts[mode]}\nVariation seed: ${seed}`,
-            "stream": false
-        };
-        try {
-            const response = await fetch(`${HOST}/api/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                // timeout: 10000 // fetch doesn't have timeout, handle separately if needed
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            return data.response.trim();
-        } catch (e) {
-            console.error('Error generating closer:', e);
-            // Fallback to static closer
-            return closers[Math.floor(Math.random() * closers.length)];
-        }
-    }
 
     function waitForElement(selector, timeout = 5000) {
         return new Promise((resolve, reject) => {
@@ -511,11 +591,7 @@
                 const addCloser = !greeting.startsWith("Can I get a");
                 let closer = '';
                 if (addCloser) {
-                    if (useAiClosers && Math.random() < 0.5) {
-                        closer = await generateCloser();
-                    } else {
-                        closer = closers[Math.floor(Math.random() * closers.length)];
-                    }
+                    closer = closers[Math.floor(Math.random() * closers.length)];
                 }
                 let numEmojis;
                 if (maxEmojis === 'random') {
@@ -560,7 +636,6 @@
         GM_setValue(storagePrefix + 'intervalMins', intervalMins);
         GM_setValue(storagePrefix + 'maxEmojis', maxEmojis);
         GM_setValue(storagePrefix + 'regenerateOnAuto', regenerateOnAuto);
-        GM_setValue(storagePrefix + 'useAiClosers', useAiClosers);
         GM_setValue(storagePrefix + 'messages', messages);
     }
 
@@ -590,10 +665,10 @@
                 <option value="Boost" ${mode === 'Boost' ? 'selected' : ''}>Boost</option>
                 <option value="Crypto" ${mode === 'Crypto' ? 'selected' : ''}>Crypto</option>
                 <option value="Pro" ${mode === 'Pro' ? 'selected' : ''}>Pro</option>
+                <option value="Cute" ${mode === 'Cute' ? 'selected' : ''}>Cute</option>
+                <option value="Zen" ${mode === 'Zen' ? 'selected' : ''}>Zen</option>
+                <option value="Hype" ${mode === 'Hype' ? 'selected' : ''}>Hype</option>
             </select>
-        </label>
-        <label style="display:block; margin-bottom:10px;">
-            <input type="checkbox" id="useAiClosers" ${useAiClosers ? 'checked' : ''}> Use AI-generated closers (mixed with originals)
         </label>
         <label style="display:block; margin-bottom:10px;">Start Date:
             <input type="date" id="startDate" value="${startDate}" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
@@ -693,7 +768,6 @@
     updateMsgList();
 
     const modeSelect = document.getElementById('modeSelect');
-    const useAiClosersCheckbox = document.getElementById('useAiClosers');
     const startDateInput = document.getElementById('startDate');
     const startTimeInput = document.getElementById('startTime');
     const intervalHoursInput = document.getElementById('intervalHours');
@@ -725,11 +799,6 @@
         saveSettings();
     });
 
-    useAiClosersCheckbox.addEventListener('change', () => {
-        useAiClosers = useAiClosersCheckbox.checked;
-        saveSettings();
-    });
-
     generateRandomBtn.addEventListener('click', async () => {
         if (isScheduling || isAutoQueueRunning) {
             logArea.innerHTML += 'Busy, cannot regenerate messages now.<br>';
@@ -747,7 +816,7 @@
             logArea.scrollTop = logArea.scrollHeight;
             return;
         }
-        ['mode', 'startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'useAiClosers', 'messages', 'nextAutoCheckTime'].forEach(key => {
+        ['mode', 'startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'messages', 'nextAutoCheckTime'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
@@ -958,7 +1027,6 @@
                 const newPrefix = `xSched_${newHref}_`;
                 // Reload settings for new account
                 mode = GM_getValue(newPrefix + 'mode', defaults.mode);
-                useAiClosers = GM_getValue(newPrefix + 'useAiClosers', defaults.useAiClosers);
                 startDate = GM_getValue(newPrefix + 'startDate', getLocalDateStr());
                 startTime = GM_getValue(newPrefix + 'startTime', defaults.startTime);
                 intervalHours = GM_getValue(newPrefix + 'intervalHours', defaults.intervalHours);
@@ -974,7 +1042,6 @@
                 eveningNightEmojis = modes[mode].eveningNightEmojis.concat(newAccountConfig.eveningNightEmojisExtras || []);
                 // Update panel elements
                 document.getElementById('modeSelect').value = mode;
-                document.getElementById('useAiClosers').checked = useAiClosers;
                 document.getElementById('startDate').value = startDate;
                 document.getElementById('startTime').value = startTime;
                 document.getElementById('intervalHours').value = intervalHours;

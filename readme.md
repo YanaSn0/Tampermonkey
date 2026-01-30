@@ -54,5 +54,6 @@
 - 1.11 added: Can now set your vibe to Flirty, Boost, Crypto and Pro.
 - 1.12 added: Generate with AI toggle.
 - 1.13 added: Removed AI. Added more modes and closers. Default Hype.
+- 1.14 fixed: Now does 12 hour and 24 hour formats.
 
 # [PayPal-Donations](https://www.paypal.com/donate/?hosted_button_id=9LWWH273HEVC4 "Donate to YanaHeat") ⬅️

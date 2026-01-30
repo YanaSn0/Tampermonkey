@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.12
+// @version      1.13
 // @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
-// @match        https://x.com/*
+// @match        https://x.com/YanaHeat
+// @match        https://x.com/compose/post*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -192,42 +193,42 @@
             morningEmojisExtras: ["🖌️", "🦁"],
             afternoonEmojisExtras: ["🪭", "💬"],
             eveningNightEmojisExtras: ["🐐", "🕔"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaSn0w1': {
             closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🎨", "🌞"],
             afternoonEmojisExtras: ["⚡", "🌈"],
             eveningNightEmojisExtras: ["🌌", "🥰"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan01': {
             closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojisExtras: ["🌻", "💦", "🐪"],
             eveningNightEmojisExtras: ["🌆", "✨", "🍸"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan02': {
             closersExtras: ["Legend"],
             morningEmojisExtras: ["⚔️", "😊", "🌐"],
             afternoonEmojisExtras: ["🤔", "🎉", "💬"],
             eveningNightEmojisExtras: ["💜", "🙏", "🏆"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan03': {
             closersExtras: ["Legend"],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan04': {
             closersExtras: ["Legend"],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         }
         // Add more accounts here as needed
     };
@@ -244,7 +245,7 @@
     const defaults = {
         mode: 'Hype', // Default mode
         startDate: new Date().toISOString().split('T')[0],
-        startTime: '21:30',
+        startTime: '23:59',
         intervalHours: 2,
         intervalMins: 30,
         gmGreetings: ["Good morning,", "GM,", "Can I get a GM?"],
@@ -372,18 +373,14 @@
 
             await wait(1000);
 
-            const year = targetTime.getFullYear().toString();
-            const month = (targetTime.getMonth() + 1).toString();
-            const day = targetTime.getDate().toString();
-            let hour = targetTime.getHours();
-            const ampm = hour < 12 ? 'am' : 'pm';
-            hour = hour % 12;
-            if (hour === 0) hour = 12;
-            hour = hour.toString();
-            const minute = targetTime.getMinutes().toString().padStart(2, '0');
+            const yearStr = targetTime.getFullYear().toString();
+            const monthStr = (targetTime.getMonth() + 1).toString();
+            const dayStr = targetTime.getDate().toString();
+            const hour = targetTime.getHours();
+            const minuteStr = targetTime.getMinutes().toString();
 
             const dateInput = await waitForElement('input[type="date"]');
-            dateInput.value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            dateInput.value = `${yearStr}-${monthStr.padStart(2, '0')}-${dayStr.padStart(2, '0')}`;
             dateInput.dispatchEvent(new Event('change', { bubbles: true }));
 
             await wait(500);
@@ -392,16 +389,36 @@
             const dateSelects = dateGroup.querySelectorAll('select');
 
             if (dateSelects.length === 3) {
-                dateSelects[2].value = year;
-                dateSelects[2].dispatchEvent(new Event('change', { bubbles: true }));
+                let monthSelect, daySelect, yearSelect;
+                dateSelects.forEach(select => {
+                    const labelId = select.getAttribute('aria-labelledby');
+                    if (labelId) {
+                        const label = document.getElementById(labelId);
+                        if (label) {
+                            const text = label.textContent.toLowerCase();
+                            if (text.includes('month')) monthSelect = select;
+                            else if (text.includes('day')) daySelect = select;
+                            else if (text.includes('year')) yearSelect = select;
+                        }
+                    }
+                });
+                if (!monthSelect || !daySelect || !yearSelect) {
+                    // Fallback to assumed order: month, day, year
+                    monthSelect = dateSelects[0];
+                    daySelect = dateSelects[1];
+                    yearSelect = dateSelects[2];
+                }
+
+                yearSelect.value = yearStr;
+                yearSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
 
-                dateSelects[0].value = month;
-                dateSelects[0].dispatchEvent(new Event('change', { bubbles: true }));
+                monthSelect.value = monthStr;
+                monthSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
 
-                dateSelects[1].value = day;
-                dateSelects[1].dispatchEvent(new Event('change', { bubbles: true }));
+                daySelect.value = dayStr;
+                daySelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
             }
 
@@ -410,18 +427,56 @@
             const timeGroup = await waitForElement('[aria-label="Time"]');
             const timeSelects = timeGroup.querySelectorAll('select');
 
-            if (timeSelects.length === 3) {
-                timeSelects[0].value = hour;
-                timeSelects[0].dispatchEvent(new Event('change', { bubbles: true }));
-                await wait(200);
+            let hourSelect, minuteSelect, ampmSelect;
+            timeSelects.forEach(select => {
+                const labelId = select.getAttribute('aria-labelledby');
+                if (labelId) {
+                    const label = document.getElementById(labelId);
+                    if (label) {
+                        const text = label.textContent.toLowerCase();
+                        if (text.includes('hour')) hourSelect = select;
+                        else if (text.includes('minute')) minuteSelect = select;
+                        else if (text.includes('am') || text.includes('pm')) ampmSelect = select;
+                    }
+                }
+            });
 
-                timeSelects[1].value = minute;
-                timeSelects[1].dispatchEvent(new Event('change', { bubbles: true }));
-                await wait(200);
+            if (ampmSelect) {
+                // 12-hour format
+                let hour12 = hour % 12;
+                if (hour12 === 0) hour12 = 12;
+                const hour12Str = hour12.toString();
+                const ampm = hour < 12 ? 'am' : 'pm';
 
-                timeSelects[2].value = ampm;
-                timeSelects[2].dispatchEvent(new Event('change', { bubbles: true }));
-                await wait(200);
+                if (hourSelect) {
+                    hourSelect.value = hour12Str;
+                    hourSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+                if (minuteSelect) {
+                    minuteSelect.value = minuteStr;
+                    minuteSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+                if (ampmSelect) {
+                    ampmSelect.value = ampm;
+                    ampmSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+            } else {
+                // 24-hour format
+                const hour24Str = hour.toString();
+
+                if (hourSelect) {
+                    hourSelect.value = hour24Str;
+                    hourSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+                if (minuteSelect) {
+                    minuteSelect.value = minuteStr;
+                    minuteSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
             }
 
             const confirmButton = await waitForElement('[data-testid="scheduledConfirmationPrimaryAction"]:not([disabled])');

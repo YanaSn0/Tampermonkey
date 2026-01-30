@@ -1,10 +1,11 @@
 // ==UserScript==
-// @name         𝕏-Auto-Scheduler-JP
+// @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.11
+// @version      1.14
 // @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
-// @match        https://x.com/*
+// @match        https://x.com/YanaHeat
+// @match        https://x.com/compose/post*
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
@@ -37,85 +38,193 @@
 
     const storagePrefix = currentUsername ? `xSched_${currentUsername}_` : 'xSched_anon_';
 
-    const HOST = "http://192.168.1.67:11434";
-    const MODEL = "gemma3:4b";
-
-    const basePrompts = {
-        'Flirty': "Generate one short, simple flirty sentence. No emojis, no hashtags, no lists, no explanations. One sentence only.",
-        'Boost': "Generate one short, simple sentence about gaining followers on X. No emojis, no hashtags, no lists, no explanations. One sentence only.",
-        'Crypto': "Generate one short, simple sentence about networking in crypto. No emojis, no hashtags, no lists, no explanations. One sentence only.",
-        'Pro': "Generate one short, simple sentence about professional networking. No emojis, no hashtags, no lists, no explanations. One sentence only."
-    };
-
     const modes = {
         'Flirty': {
-            closers: ["Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful",
-                      "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae",
-                      "My Everything", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie",
-                      "Gorgeous", "Muffin"],
+            closers: [
+                "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful",
+                "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae",
+                "My Love", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie",
+                "Gorgeous", "Muffin", "Hun"
+            ],
             morningEmojis: ["💕", "❤", "😘", "😍", "🌹", "😽", "💋", "🥰", "💖", "😊"],
             afternoonEmojis: ["🔥", "💦", "😎", "💋", "🌹", "😘", "💖", "🥰", "😍", "🌞"],
             eveningNightEmojis: ["🌙", "💋", "🥂", "😘", "💖", "🥰", "🌌", "⭐", "🤍", "😍"]
         },
+
         'Boost': {
-            closers: ["Say just Hello", "Gain 70 followers", "Turn on notifications", "Active accounts?", "Grow 101 Organic Followers",
-                      "We follow you.", "Who needs 500 followrs", "We will connect fast", "Gain 200 foIIowers is easy!!!", "Say Hi, we follow you instantly",
-                      "God bless reply guys", "Thank you God for the boost", "Thank you God for Consistency", "TY, appreciate the follow.",
-                      "Follow backs guaranteed", "Active people only", "Gain Train rolling", "We’ll help you reach 10k+", "Looking to grow your handle?", "Normalize Following Small Accounts",
-                      "Keep on crankin' follows"],
+            closers: [
+                "Just say Hello. Gain 59+ Grinders",
+                "Just say Hi. Gain 39 +",
+                "Drop a reply. Gain 101 + Actives",
+                "Turn on my notifications for huge gains.",
+                "Any active accounts?",
+                "Grow 101+ Organics",
+                "Let's Gain 87+ actives.",
+                "Who needs 500 plus actives?",
+                "We will connect fast",
+                "Gain 200 plus easy!",
+                "Say Hi, we connect you instantly",
+                "God bless reply guys",
+                "Thank you God for the boost",
+                "Thank you God for Consistency",
+                "TY God, appreciate the foll0w.",
+                "Can we b00st you?",
+                "I follow from the RT section.",
+                "Support small accounts",
+                "Gain Train",
+                "We’ll help you reach 10k+",
+                "Looking to grow your handle?",
+                "Normalize supporting Small Accounts",
+                "Keep on crankin' massive gains.",
+                "If you see this, kindly repost.",
+
+                // additions, same vibe
+                "Drop a Hi, gain 77+ actives",
+                "Active crew, check in",
+                "Let’s run gains today",
+                "Push for 150+ actives",
+                "Who’s boosting today?",
+                "Engage for clean gains",
+                "Run it up, gain style",
+                "Small accounts matter",
+                "Boost wave incoming",
+                "Let’s spark 200+ reach",
+                "Reply once, gain plenty",
+                "Organic gains only",
+                "Keep the gains rolling",
+                "Big energy, big gains",
+                "Actives check‑in time",
+                "Push your reach today",
+                "Let’s build momentum",
+                "Drop a word, gain more",
+                "Steady gains all day",
+                "Boost mode activated"
+            ],
             morningEmojis: ["🚀", "💪", "🚂", "☕", "💚", "🌟", "⚡", "🔥", "✅", "🏆"],
             afternoonEmojis: ["💥", "⚡", "🚀", "🔥", "🏆", "💪", "👍", "✅", "🎉", "🤩"],
             eveningNightEmojis: ["👍", "⭐", "💎", "🏆", "✅", "💪", "🌌", "✨", "🥇", "🔥"]
         },
+
         'Crypto': {
-            closers: ["Builders", "Peeps", "Fam", "Frens", "Fren", "Crew", "Squad", "Tribe", "Network",
-                      "Allies", "Partners", "Supporters", "Connections", "Circle", "Group", "Let's network",
-                      "Connect with me", "Let's engage", "Whats the ticker?"],
+            closers: [
+                "Builders", "Peeps", "Fam", "Frens", "Fren", "Crew", "Squad", "Tribe", "Network",
+                "Allies", "Partners", "Supporters", "Connections", "Circle", "Group", "Let's network",
+                "Connect with me", "Let's engage", "Whats the ticker?",
+
+                // additions, same lane, no “tag your dev”
+                "Drop your ticker",
+                "Share your alpha",
+                "Who’s building today?",
+                "Builders tap in",
+                "On‑chain crew here",
+                "Web3 fam check in",
+                "Show your chart",
+                "What are you building?",
+                "Roll call for builders",
+                "Any new projects today?"
+            ],
             morningEmojis: ["💰", "📈", "🚀", "💎", "🪙", "🌅", "☕", "✨", "🔥", "⚡"],
             afternoonEmojis: ["💥", "📊", "🚀", "💰", "🪙", "💎", "🌞", "🔥", "⚡", "📈"],
             eveningNightEmojis: ["🌙", "💎", "📈", "💰", "🪙", "🌌", "⭐", "🚀", "🔥", "✨"]
         },
+
         'Pro': {
-            closers: ["Everyone", "Friends", "Friend", "Colleagues", "Team", "Community", "Partners", "Network",
-                      "Let's connect", "Drop a hi", "Say hello", "Follow along", "Let's vibe", "Let's chat",
-                      "Hit reply", "Tag a friend", "Reply below"],
+            closers: [
+                "Everyone", "Friends", "Friend", "Colleagues", "Team", "Community", "Partners", "Network",
+                "Let's connect", "Drop a hi", "Say hello", "Follow along", "Let's vibe", "Let's chat",
+                "Hit reply", "Tag a friend", "Reply below",
+
+                // additions, same tone
+                "Share your thoughts",
+                "Join the conversation",
+                "Let’s keep learning",
+                "Stay inspired",
+                "Keep growing",
+                "Add your take",
+                "What do you think?",
+                "Chime in",
+                "Your turn"
+            ],
             morningEmojis: ["☕", "🌅", "😊", "🌻", "✨", "🌟", "🙏", "🌞", "🕊️", "🌈"],
             afternoonEmojis: ["🌤️", "🕒", "🍽️", "😎", "🌳", "☀️", "⚡", "🌈", "💥", "🌬️"],
             eveningNightEmojis: ["🌙", "💎", "📈", "🌆", "✨", "🌌", "⭐", "🤍", "🥰", "🦉"]
+        },
+
+        'Cute': {
+            closers: [
+                "Little bean", "Tiny panda", "Sweet bunny", "Happy puppy", "Sleepy kitten",
+                "Tiny sprout", "Soft peach", "Berry sweet", "Sweet muffin", "Cookie crumb",
+                "Cherry drop", "Petal heart", "Poppy bloom", "Daisy face", "Lucky clover",
+                "Soft sparkle", "Little bubble", "Tiny nugget", "Cute button", "Shining star"
+            ],
+            morningEmojis: ["🌸", "🐣", "☀️", "🐻", "🐰", "🍓", "😊", "🌼", "✨", "🧸"],
+            afternoonEmojis: ["🌤️", "🐱", "🐶", "🍉", "🍪", "🌈", "😄", "🫧", "💖", "🌻"],
+            eveningNightEmojis: ["🌙", "🧸", "⭐", "🌌", "🐱", "🐰", "💤", "✨", "🤍", "🌟"]
+        },
+
+        'Zen': {
+            closers: [
+                "Stay calm", "Stay soft", "Breathe easy", "Find your center", "Stay grounded",
+                "Move gently", "Stay present", "Keep it light", "Soft focus", "Quiet mind",
+                "Gentle pace", "Slow and steady", "Calm energy", "Soft landing", "Peaceful night",
+                "Easy morning", "Soft reset", "Quiet moment", "Steady heart", "Calm and clear"
+            ],
+            morningEmojis: ["🌅", "☕", "🧘", "🍃", "🌿", "🌞", "🕊️", "💧", "✨", "🌻"],
+            afternoonEmojis: ["🌤️", "🍃", "🌳", "🧘", "💭", "☀️", "🌈", "💧", "✨", "😌"],
+            eveningNightEmojis: ["🌙", "🧘", "🌌", "⭐", "🕯️", "💤", "🍃", "🤍", "✨", "🌊"]
+        },
+
+        'Hype': {
+            closers: [
+                "Full send", "Big energy", "We go again", "Run it up", "Locked in",
+                "All gas", "No brakes", "Max volume", "Turn it up", "We move",
+                "No limits", "All in", "Let’s cook", "Turn the dial", "Push the line",
+                "No slowing down", "Keep it rolling", "Stay loud", "Stay winning", "We’re live"
+            ],
+            morningEmojis: ["⚡", "🔥", "🚀", "🌞", "💪", "🏁", "🎧", "🌟", "✅", "🏆"],
+            afternoonEmojis: ["💥", "🔥", "🚀", "⚡", "😎", "🏆", "🎉", "📈", "🤘", "⭐"],
+            eveningNightEmojis: ["🌙", "🔥", "🌌", "⭐", "⚡", "🏆", "🎇", "🎆", "💣", "🚀"]
         }
     };
 
     const accountConfigs = {
         'YanaHeat': {
-            closersExtras: ["Love", "Gain Train", "Let's connect"],
+            closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🖌️", "🦁"],
             afternoonEmojisExtras: ["🪭", "💬"],
             eveningNightEmojisExtras: ["🐐", "🕔"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaSn0w1': {
-            closersExtras: [],
+            closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🎨", "🌞"],
             afternoonEmojisExtras: ["⚡", "🌈"],
             eveningNightEmojisExtras: ["🌌", "🥰"],
             timezoneOffset: 0
         },
-        'YenaFan01': {
-            closersExtras: [],
+        'YanaFan01': {
+            closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojisExtras: ["🌻", "💦", "🐪"],
             eveningNightEmojisExtras: ["🌆", "✨", "🍸"],
             timezoneOffset: 0
         },
-        'YenaFan02': {
-            closersExtras: [],
+        'YanaFan02': {
+            closersExtras: ["Legend"],
             morningEmojisExtras: ["⚔️", "😊", "🌐"],
             afternoonEmojisExtras: ["🤔", "🎉", "💬"],
             eveningNightEmojisExtras: ["💜", "🙏", "🏆"],
             timezoneOffset: 0
         },
-        'YenaFan03': {
-            closersExtras: [],
+        'YanaFan03': {
+            closersExtras: ["Legend"],
+            morningEmojisExtras: ["🌅", "🌞", "😘"],
+            afternoonEmojisExtras: ["😍", "❤️", "🌅"],
+            eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
+            timezoneOffset: 0
+        },
+        'YanaFan04': {
+            closersExtras: ["Legend"],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
@@ -134,7 +243,7 @@
     }
 
     const defaults = {
-        mode: 'Flirty', // Default mode
+        mode: 'Hype', // Default mode
         startDate: new Date().toISOString().split('T')[0],
         startTime: '23:59',
         intervalHours: 2,
@@ -149,7 +258,6 @@
         eveningNightEmojis: ["🕸️", "🥰", "⭐", "🤍", "🌙", "😘", "💫", "🌆", "✨", "🌌", "🦉", "🌃", "🕯️", "🌠", "🛌", "😴", "🌛", "🦇", "🎆", "🌑"],
         maxEmojis: 'random',
         regenerateOnAuto: true,
-        useAiClosers: false,
         messages: []
     };
 
@@ -157,37 +265,10 @@
     const timezoneOffset = resolvedAccountConfig.timezoneOffset || 0;
 
     let mode = GM_getValue(storagePrefix + 'mode', defaults.mode);
-    let useAiClosers = GM_getValue(storagePrefix + 'useAiClosers', defaults.useAiClosers);
     let closers = modes[mode].closers.concat(resolvedAccountConfig.closersExtras || []);
     let morningEmojis = modes[mode].morningEmojis.concat(resolvedAccountConfig.morningEmojisExtras || []);
     let afternoonEmojis = modes[mode].afternoonEmojis.concat(resolvedAccountConfig.afternoonEmojisExtras || []);
     let eveningNightEmojis = modes[mode].eveningNightEmojis.concat(resolvedAccountConfig.eveningNightEmojisExtras || []);
-
-    async function generateCloser() {
-        const seed = Math.floor(Math.random() * 1000);
-        const payload = {
-            "model": MODEL,
-            "prompt": `${basePrompts[mode]}\nVariation seed: ${seed}`,
-            "stream": false
-        };
-        try {
-            const response = await fetch(`${HOST}/api/generate`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload),
-                // timeout: 10000 // fetch doesn't have timeout, handle separately if needed
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            return data.response.trim();
-        } catch (e) {
-            console.error('Error generating closer:', e);
-            // Fallback to static closer
-            return closers[Math.floor(Math.random() * closers.length)];
-        }
-    }
 
     function waitForElement(selector, timeout = 5000) {
         return new Promise((resolve, reject) => {
@@ -280,9 +361,7 @@
 
     async function schedulePost(targetTime, text) {
         try {
-            if (!isScheduling) {
-                await closeModal();
-            }
+            await closeModal();
 
             const newPostButton = await waitForElement('[data-testid="SideNav_NewTweet_Button"], [data-testid="SideNav_NewPost_Button"]');
             newPostButton.click();
@@ -294,83 +373,110 @@
 
             await wait(1000);
 
-            const year = targetTime.getFullYear().toString();
-            const month = (targetTime.getMonth() + 1).toString();
-            const day = targetTime.getDate().toString();
-            let hour = targetTime.getHours() % 12;
-            if (hour === 0) hour = 12;
-            hour = hour.toString();
-            const minute = targetTime.getMinutes().toString().padStart(2, '0');
+            const yearStr = targetTime.getFullYear().toString();
+            const monthStr = targetTime.getMonth() + 1; // 1-12
+            const dayStr = targetTime.getDate().toString();
+            const hour = targetTime.getHours();
+            const minuteStr = targetTime.getMinutes().toString().padStart(2, '0');
 
             const dateInput = await waitForElement('input[type="date"]');
-            dateInput.value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            dateInput.value = `${yearStr}-${String(monthStr).padStart(2, '0')}-${dayStr.padStart(2, '0')}`;
             dateInput.dispatchEvent(new Event('change', { bubbles: true }));
+
             await wait(500);
 
-            // Identify date selects dynamically
             const dateGroup = await waitForElement('[aria-label="Date"]');
             const dateSelects = dateGroup.querySelectorAll('select');
-            let monthSelect, daySelect, yearSelect;
-            dateSelects.forEach(select => {
-                const optLen = select.options.length;
-                if (optLen > 40) { // Years (typically 50-100+ options)
-                    yearSelect = select;
-                } else if (optLen === 12 || optLen === 13) { // Months (12, sometimes with blank)
-                    monthSelect = select;
-                } else if (optLen >= 28 && optLen <= 31) { // Days (28-31)
-                    daySelect = select;
-                }
-            });
 
-            // Set values (pad if needed, but selects usually don't require padding)
-            if (yearSelect) {
-                yearSelect.value = year;
+            if (dateSelects.length === 3) {
+                let monthSelect, daySelect, yearSelect;
+                dateSelects.forEach(select => {
+                    const labelId = select.getAttribute('aria-labelledby');
+                    if (labelId) {
+                        const label = document.getElementById(labelId);
+                        if (label) {
+                            const text = label.textContent.toLowerCase();
+                            if (text.includes('month')) monthSelect = select;
+                            else if (text.includes('day')) daySelect = select;
+                            else if (text.includes('year')) yearSelect = select;
+                        }
+                    }
+                });
+                if (!monthSelect || !daySelect || !yearSelect) {
+                    // Fallback to assumed order: month, day, year
+                    monthSelect = dateSelects[0];
+                    daySelect = dateSelects[1];
+                    yearSelect = dateSelects[2];
+                }
+
+                yearSelect.value = yearStr;
                 yearSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
-            }
-            if (monthSelect) {
-                monthSelect.value = month; // Usually '1' to '12', not padded
+
+                monthSelect.value = monthStr.toString();
                 monthSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
-            }
-            if (daySelect) {
-                daySelect.value = day;
+
+                daySelect.value = dayStr;
                 daySelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
             }
 
             await wait(500);
 
-            // Identify time selects dynamically
             const timeGroup = await waitForElement('[aria-label="Time"]');
             const timeSelects = timeGroup.querySelectorAll('select');
-            let hourSelect, minSelect, ampmSelect;
+
+            let hourSelect, minuteSelect, ampmSelect;
             timeSelects.forEach(select => {
-                const optLen = select.options.length;
-                if (optLen === 12 || optLen === 13) { // Hours 1-12
-                    hourSelect = select;
-                } else if (optLen === 60 || optLen === 61) { // Minutes 00-59
-                    minSelect = select;
-                } else if (optLen === 2 || optLen === 3) { // AM/PM (2 options)
-                    ampmSelect = select;
+                const labelId = select.getAttribute('aria-labelledby');
+                if (labelId) {
+                    const label = document.getElementById(labelId);
+                    if (label) {
+                        const text = label.textContent.toLowerCase();
+                        if (text.includes('hour')) hourSelect = select;
+                        else if (text.includes('minute')) minuteSelect = select;
+                        else if (text.includes('am') || text.includes('pm')) ampmSelect = select;
+                    }
                 }
             });
 
-            // Set time values
-            if (hourSelect) {
-                hourSelect.value = hour.toString(); // '1' to '12'
-                hourSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                await wait(200);
-            }
-            if (minSelect) {
-                minSelect.value = minute.padStart(2, '0'); // '00' to '59'
-                minSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                await wait(200);
-            }
             if (ampmSelect) {
-                ampmSelect.selectedIndex = (targetTime.getHours() < 12 ? 0 : 1); // 0=AM/午前, 1=PM/午後
-                ampmSelect.dispatchEvent(new Event('change', { bubbles: true }));
-                await wait(200);
+                // 12-hour format
+                let hour12 = hour % 12;
+                if (hour12 === 0) hour12 = 12;
+                const hour12Str = hour12.toString();
+                const ampm = hour < 12 ? 'am' : 'pm';
+
+                if (hourSelect) {
+                    hourSelect.value = hour12Str;
+                    hourSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+                if (minuteSelect) {
+                    minuteSelect.value = minuteStr;
+                    minuteSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+                if (ampmSelect) {
+                    ampmSelect.value = ampm;
+                    ampmSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+            } else {
+                // 24-hour format
+                const hour24Str = hour.toString().padStart(2, '0');
+
+                if (hourSelect) {
+                    hourSelect.value = hour24Str;
+                    hourSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
+                if (minuteSelect) {
+                    minuteSelect.value = minuteStr;
+                    minuteSelect.dispatchEvent(new Event('change', { bubbles: true }));
+                    await wait(200);
+                }
             }
 
             const confirmButton = await waitForElement('[data-testid="scheduledConfirmationPrimaryAction"]:not([disabled])');
@@ -415,18 +521,17 @@
             scheduleOption.click();
             await wait(1000);
 
-            // Find and click "Scheduled posts" button by text content (support English and Japanese)
+            // Find and click "Scheduled posts" button by text content
             let schedBtn;
             const buttons = document.querySelectorAll('button');
             for (let btn of buttons) {
-                const text = btn.textContent.trim();
-                if (text.includes('Scheduled posts') || text.includes('予約投稿ポスト') || text.includes('予約投稿') || text.includes('予約済みポスト')) {
+                if (btn.textContent.includes('Scheduled posts')) {
                     schedBtn = btn;
                     break;
                 }
             }
             if (!schedBtn) {
-                console.log('Could not find "Scheduled posts" button (tried English/Japanese variants).');
+                console.log('Could not find "Scheduled posts" button.');
                 await closeModal();
                 return;
             }
@@ -454,18 +559,17 @@
             scheduleOption.click();
             await wait(1000);
 
-            // Find and click "Scheduled posts" button by text content (support English and Japanese)
+            // Find and click "Scheduled posts" button by text content
             let schedBtn;
             const buttons = document.querySelectorAll('button');
             for (let btn of buttons) {
-                const text = btn.textContent.trim();
-                if (text.includes('Scheduled posts') || text.includes('予約投稿ポスト') || text.includes('予約投稿') || text.includes('予約済みポスト')) {
+                if (btn.textContent.includes('Scheduled posts')) {
                     schedBtn = btn;
                     break;
                 }
             }
             if (!schedBtn) {
-                logArea.innerHTML += 'Could not find "Scheduled posts" button (tried English/Japanese variants).<br>';
+                logArea.innerHTML += 'Could not find "Scheduled posts" button.<br>';
                 await closeModal();
                 return {count: 0, latestTime: null};
             }
@@ -490,29 +594,13 @@
                 posts.forEach(post => {
                     const timeEls = post.querySelectorAll('span');
                     for (let el of timeEls) {
-                        const text = el.textContent.trim();
-                        if (text.includes('Will send on') || text.includes('に送信予定') || text.includes('送信予定')) {  // English + Japanese variants
-                            let match = text.match(/ \w{3}, (\w{3})\.? (\d+), (\d{4}) at (\d+):(\d+) (AM|PM)/i);  // English, case insensitive
+                        if (el.textContent.includes('Will send on')) {
+                            const match = el.textContent.match(/ \w{3}, (\w{3})\.? (\d+), (\d{4}) at (\d+):(\d+) (\wM)/);
                             if (match) {
-                                const [_, monthAbbr, day, year, hour, min, ampm] = match;
-                                const monthMap = {"Jan":1, "Feb":2, "Mar":3, "Apr":4, "May":5, "Jun":6, "Jul":7, "Aug":8, "Sep":9, "Oct":10, "Nov":11, "Dec":12};
-                                const month = monthMap[monthAbbr] || parseInt(monthAbbr);
-                                let parsedHour = parseInt(hour);
-                                if (ampm.toUpperCase() === 'PM' && parsedHour < 12) parsedHour += 12;
-                                const dateStr = `${year}-${month.toString().padStart(2, '0')}-${day.padStart(2, '0')}T${parsedHour.toString().padStart(2, '0')}:${min}:00`;
+                                const [_, month, day, year, hour, min, ampm] = match;
+                                const dateStr = `${month} ${day}, ${year} ${hour}:${min} ${ampm}`;
                                 const postTime = new Date(dateStr).getTime();
                                 if (!isNaN(postTime) && postTime > maxTime) maxTime = postTime;
-                            } else {
-                                // Japanese format: e.g., "2026年1月21日 午後10:25に送信予定"
-                                match = text.match(/(\d{4})年(\d{1,2})月(\d{1,2})日.*(\d{1,2}):(\d{2}) (午前|午後)/);
-                                if (match) {
-                                    const [_, year, month, day, hour, min, ampmJp] = match;
-                                    let parsedHour = parseInt(hour);
-                                    if (ampmJp === '午後' && parsedHour < 12) parsedHour += 12;
-                                    const dateStr = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}T${parsedHour.toString().padStart(2, '0')}:${min}:00`;
-                                    const postTime = new Date(dateStr).getTime();
-                                    if (!isNaN(postTime) && postTime > maxTime) maxTime = postTime;
-                                }
                             }
                             break;
                         }
@@ -558,11 +646,7 @@
                 const addCloser = !greeting.startsWith("Can I get a");
                 let closer = '';
                 if (addCloser) {
-                    if (useAiClosers && Math.random() < 0.5) {
-                        closer = await generateCloser();
-                    } else {
-                        closer = closers[Math.floor(Math.random() * closers.length)];
-                    }
+                    closer = closers[Math.floor(Math.random() * closers.length)];
                 }
                 let numEmojis;
                 if (maxEmojis === 'random') {
@@ -607,7 +691,6 @@
         GM_setValue(storagePrefix + 'intervalMins', intervalMins);
         GM_setValue(storagePrefix + 'maxEmojis', maxEmojis);
         GM_setValue(storagePrefix + 'regenerateOnAuto', regenerateOnAuto);
-        GM_setValue(storagePrefix + 'useAiClosers', useAiClosers);
         GM_setValue(storagePrefix + 'messages', messages);
     }
 
@@ -637,10 +720,10 @@
                 <option value="Boost" ${mode === 'Boost' ? 'selected' : ''}>Boost</option>
                 <option value="Crypto" ${mode === 'Crypto' ? 'selected' : ''}>Crypto</option>
                 <option value="Pro" ${mode === 'Pro' ? 'selected' : ''}>Pro</option>
+                <option value="Cute" ${mode === 'Cute' ? 'selected' : ''}>Cute</option>
+                <option value="Zen" ${mode === 'Zen' ? 'selected' : ''}>Zen</option>
+                <option value="Hype" ${mode === 'Hype' ? 'selected' : ''}>Hype</option>
             </select>
-        </label>
-        <label style="display:block; margin-bottom:10px;">
-            <input type="checkbox" id="useAiClosers" ${useAiClosers ? 'checked' : ''}> Use AI-generated closers (mixed with originals)
         </label>
         <label style="display:block; margin-bottom:10px;">Start Date:
             <input type="date" id="startDate" value="${startDate}" style="padding:5px; border:1px solid #ced4da; border-radius:4px;">
@@ -740,7 +823,6 @@
     updateMsgList();
 
     const modeSelect = document.getElementById('modeSelect');
-    const useAiClosersCheckbox = document.getElementById('useAiClosers');
     const startDateInput = document.getElementById('startDate');
     const startTimeInput = document.getElementById('startTime');
     const intervalHoursInput = document.getElementById('intervalHours');
@@ -772,11 +854,6 @@
         saveSettings();
     });
 
-    useAiClosersCheckbox.addEventListener('change', () => {
-        useAiClosers = useAiClosersCheckbox.checked;
-        saveSettings();
-    });
-
     generateRandomBtn.addEventListener('click', async () => {
         if (isScheduling || isAutoQueueRunning) {
             logArea.innerHTML += 'Busy, cannot regenerate messages now.<br>';
@@ -794,7 +871,7 @@
             logArea.scrollTop = logArea.scrollHeight;
             return;
         }
-        ['mode', 'startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'useAiClosers', 'messages', 'nextAutoCheckTime'].forEach(key => {
+        ['mode', 'startDate', 'startTime', 'intervalHours', 'intervalMins', 'maxEmojis', 'regenerateOnAuto', 'messages', 'nextAutoCheckTime'].forEach(key => {
             GM_deleteValue(storagePrefix + key);
         });
         location.reload();
@@ -927,7 +1004,6 @@
 
             const times = computeScheduleTimes(today, startTime, intervalHours, intervalMins, messages.length);
             let successCount = 0;
-            isScheduling = true;  // Set flag for batch
             for (let i = 0; i < messages.length; i++) {
                 const targetTime = times[i];
                 const text = messages[i];
@@ -939,7 +1015,6 @@
                 if (success) successCount++;
                 await wait(2000);
             }
-            isScheduling = false;  // Reset flag
             setTimeout(() => { openScheduledView(); }, 1000); // Leave on scheduled page for manual pic addition
             const lastGNTime = times[times.length - 1].getTime() + 5 * 60 * 1000;
             GM_setValue(storagePrefix + 'nextAutoCheckTime', lastGNTime);
@@ -1007,7 +1082,6 @@
                 const newPrefix = `xSched_${newHref}_`;
                 // Reload settings for new account
                 mode = GM_getValue(newPrefix + 'mode', defaults.mode);
-                useAiClosers = GM_getValue(newPrefix + 'useAiClosers', defaults.useAiClosers);
                 startDate = GM_getValue(newPrefix + 'startDate', getLocalDateStr());
                 startTime = GM_getValue(newPrefix + 'startTime', defaults.startTime);
                 intervalHours = GM_getValue(newPrefix + 'intervalHours', defaults.intervalHours);
@@ -1023,7 +1097,6 @@
                 eveningNightEmojis = modes[mode].eveningNightEmojis.concat(newAccountConfig.eveningNightEmojisExtras || []);
                 // Update panel elements
                 document.getElementById('modeSelect').value = mode;
-                document.getElementById('useAiClosers').checked = useAiClosers;
                 document.getElementById('startDate').value = startDate;
                 document.getElementById('startTime').value = startTime;
                 document.getElementById('intervalHours').value = intervalHours;

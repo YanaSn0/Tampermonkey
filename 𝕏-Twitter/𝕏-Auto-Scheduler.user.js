@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.13
+// @version      1.12
 // @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
 // @match        https://x.com/*
@@ -43,7 +43,7 @@
                 "Babe", "Hun", "Darling", "Sweetheart", "Honey", "Baby", "Sweetie", "Angel", "Beautiful",
                 "Dear", "Beloved", "Sunshine", "Cupcake", "Pumpkin", "Buttercup", "Cherub", "Boo", "Bae",
                 "My Love", "Bunny", "Lovey", "Sugar", "Sweetpea", "Poppet", "Princess", "Cutie",
-                "Gorgeous", "Muffin"
+                "Gorgeous", "Muffin", "Hun"
             ],
             morningEmojis: ["💕", "❤", "😘", "😍", "🌹", "😽", "💋", "🥰", "💖", "😊"],
             afternoonEmojis: ["🔥", "💦", "😎", "💋", "🌹", "😘", "💖", "🥰", "😍", "🌞"],
@@ -188,46 +188,46 @@
 
     const accountConfigs = {
         'YanaHeat': {
-            closersExtras: [],
+            closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🖌️", "🦁"],
             afternoonEmojisExtras: ["🪭", "💬"],
             eveningNightEmojisExtras: ["🐐", "🕔"],
-            timezoneOffset: -3
+            timezoneOffset: 0
         },
         'YanaSn0w1': {
-            closersExtras: [],
+            closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🎨", "🌞"],
             afternoonEmojisExtras: ["⚡", "🌈"],
             eveningNightEmojisExtras: ["🌌", "🥰"],
-            timezoneOffset: -3
+            timezoneOffset: 0
         },
         'YanaFan01': {
-            closersExtras: [],
+            closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojisExtras: ["🌻", "💦", "🐪"],
             eveningNightEmojisExtras: ["🌆", "✨", "🍸"],
-            timezoneOffset: -3
+            timezoneOffset: 0
         },
         'YanaFan02': {
-            closersExtras: [],
+            closersExtras: ["Legend"],
             morningEmojisExtras: ["⚔️", "😊", "🌐"],
             afternoonEmojisExtras: ["🤔", "🎉", "💬"],
             eveningNightEmojisExtras: ["💜", "🙏", "🏆"],
-            timezoneOffset: -3
+            timezoneOffset: 0
         },
         'YanaFan03': {
-            closersExtras: [],
+            closersExtras: ["Legend"],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: -3
+            timezoneOffset: 0
         },
         'YanaFan04': {
-            closersExtras: [],
+            closersExtras: ["Legend"],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: -3
+            timezoneOffset: 0
         }
         // Add more accounts here as needed
     };
@@ -244,7 +244,7 @@
     const defaults = {
         mode: 'Hype', // Default mode
         startDate: new Date().toISOString().split('T')[0],
-        startTime: '23:59',
+        startTime: '21:30',
         intervalHours: 2,
         intervalMins: 30,
         gmGreetings: ["Good morning,", "GM,", "Can I get a GM?"],

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         𝕏-Auto-Scheduler
 // @namespace    http://tampermonkey.net/
-// @version      1.14
+// @version      1.15
 // @description  Auto-Scheduler for 𝕏.
 // @author       YanaHeat
 // @match        https://x.com/YanaHeat
@@ -374,13 +374,13 @@
             await wait(1000);
 
             const yearStr = targetTime.getFullYear().toString();
-            const monthStr = targetTime.getMonth() + 1; // 1-12
+            const monthStr = (targetTime.getMonth() + 1).toString();
             const dayStr = targetTime.getDate().toString();
             const hour = targetTime.getHours();
-            const minuteStr = targetTime.getMinutes().toString().padStart(2, '0');
+            const minuteStr = targetTime.getMinutes().toString();
 
             const dateInput = await waitForElement('input[type="date"]');
-            dateInput.value = `${yearStr}-${String(monthStr).padStart(2, '0')}-${dayStr.padStart(2, '0')}`;
+            dateInput.value = `${yearStr}-${monthStr.padStart(2, '0')}-${dayStr.padStart(2, '0')}`;
             dateInput.dispatchEvent(new Event('change', { bubbles: true }));
 
             await wait(500);
@@ -413,7 +413,7 @@
                 yearSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
 
-                monthSelect.value = monthStr.toString();
+                monthSelect.value = monthStr;
                 monthSelect.dispatchEvent(new Event('change', { bubbles: true }));
                 await wait(200);
 
@@ -465,7 +465,7 @@
                 }
             } else {
                 // 24-hour format
-                const hour24Str = hour.toString().padStart(2, '0');
+                const hour24Str = hour.toString();
 
                 if (hourSelect) {
                     hourSelect.value = hour24Str;

@@ -200,35 +200,35 @@
             morningEmojisExtras: ["🎨", "🌞"],
             afternoonEmojisExtras: ["⚡", "🌈"],
             eveningNightEmojisExtras: ["🌌", "🥰"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan01': {
             closersExtras: ["Legend", "Love"],
             morningEmojisExtras: ["🫶🏻", "🍑", "🌮"],
             afternoonEmojisExtras: ["🌻", "💦", "🐪"],
             eveningNightEmojisExtras: ["🌆", "✨", "🍸"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan02': {
             closersExtras: ["Legend"],
             morningEmojisExtras: ["⚔️", "😊", "🌐"],
             afternoonEmojisExtras: ["🤔", "🎉", "💬"],
             eveningNightEmojisExtras: ["💜", "🙏", "🏆"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan03': {
             closersExtras: ["Legend"],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         },
         'YanaFan04': {
             closersExtras: ["Legend"],
             morningEmojisExtras: ["🌅", "🌞", "😘"],
             afternoonEmojisExtras: ["😍", "❤️", "🌅"],
             eveningNightEmojisExtras: ["🌆", "🌉", "🌙"],
-            timezoneOffset: 0
+            timezoneOffset: -3
         }
         // Add more accounts here as needed
     };
